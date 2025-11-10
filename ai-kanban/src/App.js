@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "./supabaseClient.js";
-import KanbanBoard from "./KanbanBoard.js";
+import KanbanBoard from "./KanbanBoard";
 import {
   createOrganisation,
   joinOrganisation,
