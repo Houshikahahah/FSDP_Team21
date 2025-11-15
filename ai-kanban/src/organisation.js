@@ -1,6 +1,6 @@
-import { supabase } from "./supabaseClient.js";
+import { supabase } from "./supabaseClient";
 
-// 🧮 Helper to generate a random 6-character alphanumeric PIN
+// 🧮 Generate PIN
 function generateRandomPin(length = 6) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let pin = "";
@@ -10,135 +10,152 @@ function generateRandomPin(length = 6) {
   return pin;
 }
 
-// 🏗️ Create a new organisation
+// 🏗 CREATE ORGANISATION + AUTO ADD OWNER AS MEMBER
 export async function createOrganisation(name, owner_id) {
-  if (!name || !owner_id) {
-    return { error: { message: "Organisation name and owner ID are required." } };
-  }
+  if (!name || !owner_id) return { error: { message: "Missing details" } };
 
   const pin = generateRandomPin();
+  const payload = { name: name.trim(), pin, owner_id };
 
-  const payload = {
-    name: name.trim(),
-    pin,
-    owner_id,
-  };
-
-  const { data, error } = await supabase
+  // create org
+  const { data: org, error: orgError } = await supabase
     .from("organisations")
     .insert([payload])
     .select()
     .maybeSingle();
 
-  return { data, error };
+  if (orgError) return { error: orgError, data: null };
+
+  // add owner as member
+  await supabase.from("organisation_members").insert([
+    {
+      organisation_id: org.id,
+      user_id: owner_id,
+      role: "owner",
+      owner_id: owner_id,
+    },
+  ]);
+
+  return { data: org, error: null };
 }
 
-// 👥 Join an organisation using name + PIN
+// 👥 JOIN ORG
 export async function joinOrganisation(name, pin, user_id) {
-  if (!name || !pin || !user_id) {
-    return { error: { message: "Organisation name, PIN, and user ID are required." } };
-  }
+  if (!name || !pin || !user_id)
+    return { error: { message: "Missing fields" } };
 
-  const trimmedName = name.trim();
-  const trimmedPin = pin.trim();
-
-  // Find organisation
   const { data: org, error: orgError } = await supabase
     .from("organisations")
     .select("id, owner_id, name")
-    .eq("name", trimmedName)
-    .eq("pin", trimmedPin)
+    .eq("name", name.trim())
+    .eq("pin", pin.trim())
     .maybeSingle();
 
-  if (orgError) return { error: { message: orgError.message } };
-  if (!org) return { error: { message: "Invalid organisation name or PIN." } };
+  if (orgError) return { error: orgError };
+  if (!org) return { error: { message: "Invalid name or PIN" } };
 
-  // Check existing membership
-  const { data: existingMember } = await supabase
+  // check existing membership
+  const { data: existing } = await supabase
     .from("organisation_members")
     .select("*")
     .eq("organisation_id", org.id)
     .eq("user_id", user_id)
     .maybeSingle();
 
-  if (existingMember) return { error: { message: "Already a member." } };
+  if (existing) return { error: { message: "Already a member" } };
 
-  // Skip if owner
-  if (user_id === org.owner_id) return { error: { message: "Owner is already part of org." } };
-
+  // insert member
   const { data, error } = await supabase
     .from("organisation_members")
-    .insert([{ organisation_id: org.id, user_id, role: "developer", owner_id: org.owner_id }])
+    .insert([
+      {
+        organisation_id: org.id,
+        user_id,
+        role: "developer",
+        owner_id: org.owner_id,
+      },
+    ])
     .select()
     .maybeSingle();
 
   return { data, error };
 }
 
-// 🧠 Get all organisations for a user
+// 🧠 GET MY ORGS
 export async function getMyOrganisations(user_id) {
   if (!user_id) return { error: { message: "Missing user ID" } };
 
-  const { data: owned, error: ownedError } = await supabase
-    .from("organisations")
-    .select("*")
-    .eq("owner_id", user_id);
-  if (ownedError) return { error: ownedError };
-
-  const { data: memberRows, error: memberError } = await supabase
-    .from("organisation_members")
-    .select("organisation_id")
-    .eq("user_id", user_id);
-  if (memberError) return { error: memberError };
-
-  const memberOrgIds = memberRows?.map(m => m.organisation_id) || [];
-  let joined = [];
-
-  if (memberOrgIds.length > 0) {
-    const { data: joinedData, error: joinedError } = await supabase
+  try {
+    const { data: owned } = await supabase
       .from("organisations")
       .select("*")
-      .in("id", memberOrgIds);
-    if (joinedError) return { error: joinedError };
+      .eq("owner_id", user_id);
 
-    joined = joinedData.filter(org => !owned.some(o => o.id === org.id));
+    const { data: memberRows } = await supabase
+      .from("organisation_members")
+      .select("organisation_id")
+      .eq("user_id", user_id);
+
+    const memberIds = memberRows?.map((m) => m.organisation_id) || [];
+
+    const { data: joined } = await supabase
+      .from("organisations")
+      .select("*")
+      .in("id", memberIds);
+
+    const combined = [...(owned || []), ...(joined || [])];
+
+    // remove duplicates using a Map
+    const unique = [
+      ...new Map(combined.map(org => [org.id, org])).values()
+    ];
+
+    return { data: unique, error: null };
+
+  } catch (err) {
+    return { data: [], error: err };
   }
-
-  return { data: [...owned, ...joined], error: null };
 }
 
-// 👀 Get members of an organisation with profile info (exclude owner)
+// 👀 GET MEMBERS
 export async function getMembers(orgId) {
-  if (!orgId) return { error: { message: "Org ID required." } };
-
-  const { data: members, error } = await supabase
+  const { data, error } = await supabase
     .from("organisation_members")
-    .select("*")
+    .select(`
+      user_id,
+      role,
+      organisation_id,
+      owner_id,
+      profiles:user_id (
+        username,
+        description,
+        avatar_color
+      )
+    `)
     .eq("organisation_id", orgId);
 
-  if (!members) return { data: [], error };
+  if (error) return { data: [], error };
 
-  const memberProfiles = await Promise.all(
-    members
-      .filter(m => m.user_id !== m.owner_id)
-      .map(async (m) => {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("username, avatar_url, avatar_color")
-          .eq("id", m.user_id)
-          .maybeSingle();
-        return { ...m, ...profile };
-      })
-  );
+  const members = data.map((m) => ({
+    user_id: m.user_id,
+    role: m.role,
+    username: m.profiles?.username || null,
+    description: m.profiles?.description || null,
+    avatar_color: m.profiles?.avatar_color || "#000",
+  }));
 
-  return { data: memberProfiles, error: null };
+  // SORT — owner → alphabetical
+  members.sort((a, b) => {
+    if (a.role === "owner") return -1;
+    if (b.role === "owner") return 1;
+    return (a.username || "").localeCompare(b.username || "");
+  });
+
+  return { data: members, error: null };
 }
 
-// ❌ Kick a member (owner only)
+// ❌ KICK MEMBER
 export async function kickMember(orgId, memberId, currentUserId) {
-  if (!orgId || !memberId || !currentUserId)
-    return { error: { message: "Org ID, member ID, and current user ID required." } };
-
   const { data: org } = await supabase
     .from("organisations")
     .select("owner_id")
@@ -146,7 +163,7 @@ export async function kickMember(orgId, memberId, currentUserId) {
     .maybeSingle();
 
   if (!org || org.owner_id !== currentUserId)
-    return { error: { message: "Only the owner can kick members." } };
+    return { error: { message: "Only owner can kick" } };
 
   const { data, error } = await supabase
     .from("organisation_members")
@@ -155,4 +172,33 @@ export async function kickMember(orgId, memberId, currentUserId) {
     .eq("user_id", memberId);
 
   return { data, error };
+}
+
+// 🚪 LEAVE
+export async function leaveOrganisation(orgId, userId) {
+  const { error } = await supabase
+    .from("organisation_members")
+    .delete()
+    .match({ organisation_id: orgId, user_id: userId });
+
+  return { error };
+}
+
+// 🗑 DELETE ORG (OWNER ONLY)
+export async function deleteOrganisation(orgId, userId) {
+  const { data: org } = await supabase
+    .from("organisations")
+    .select("owner_id")
+    .eq("id", orgId)
+    .maybeSingle();
+
+  if (!org || org.owner_id !== userId)
+    return { error: { message: "Only owner can delete" } };
+
+  const { error } = await supabase
+    .from("organisations")
+    .delete()
+    .eq("id", orgId);
+
+  return { error };
 }

@@ -1,28 +1,32 @@
 import React, { useState, useEffect } from "react";
-import "./LoginPage.css";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "./supabaseClient"; // ✅ Add this
+import { supabase } from "./supabaseClient";
+import "./SignupPage.css";
+
 
 const slides = [
   {
     img: "https://cdn-icons-png.flaticon.com/512/889/889140.png",
-    title: "Organize Tasks Efficiently",
-    desc: "Create boards, columns, and cards to manage your work seamlessly.",
+    title: "Start Your Kanban Journey",
+    desc: "Sign up and begin managing your tasks smarter and faster.",
   },
   {
     img: "https://cdn-icons-png.flaticon.com/512/1209/1209234.png",
-    title: "Collaborate With Your Team",
-    desc: "Share projects, assign tasks, and stay connected with teammates.",
+    title: "Collaborate Easily",
+    desc: "Invite teammates and organize your projects effortlessly.",
   },
   {
     img: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
-    title: "Track Progress Intelligently",
-    desc: "Visualize productivity trends and milestones with clarity.",
+    title: "Track Progress Seamlessly",
+    desc: "Visualize milestones and productivity trends beautifully.",
   },
 ];
 
-function LoginPage() {
-  const navigate = useNavigate(); // ✅ added
+
+function SignupPage() {
+  const navigate = useNavigate();
+
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -33,56 +37,61 @@ function LoginPage() {
   );
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // Theme handling
+
   useEffect(() => {
     const theme = darkMode ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", theme);
     localStorage.setItem("theme", theme);
   }, [darkMode]);
 
-  // Auto slideshow
+
   useEffect(() => {
     const interval = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % slides.length);
-    }, 4500);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
-  // ============================
-  // ✅ INTERNAL LOGIN LOGIC
-  // ============================
-  const handleSubmit = async (e) => {
+
+  // ------------------ HANDLE SIGNUP ------------------
+  const handleSignup = async (e) => {
     e.preventDefault();
+    setError("");
+
 
     if (!email.trim() || !password.trim()) {
       setError("Please fill in both fields.");
       return;
     }
 
-    setError("");
+
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
 
-    if (error) {
-      setError(error.message);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+
+      if (error) throw error;
+
+
+      alert("Account created! Please verify your email before logging in.");
+
+
+      navigate("/"); // Redirect to login page
+    } catch (err) {
+      setError(err.message || "Signup failed.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    // redirect to dashboard
-    navigate("/organisations");
   };
+
 
   return (
     <div className="auth-wrapper">
-      <div className="bg-orb orb-1"></div>
-      <div className="bg-orb orb-2"></div>
-
-      {/* Theme Toggle */}
       <button
         className="theme-toggle"
         onClick={() => setDarkMode((v) => !v)}
@@ -91,13 +100,15 @@ function LoginPage() {
         {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
       </button>
 
-      <div className="auth-card hover-float">
-        {/* Left: Login */}
-        <div className="auth-left">
-          <h1 className="brand">AI Kanban</h1>
-          <p className="subtitle">Sign in to your workspace</p>
 
-          <form onSubmit={handleSubmit} className="form">
+      <div className="auth-card">
+        {/* Left Side: Signup Form */}
+        <div className="auth-left">
+          <h1 className="brand">Create Account</h1>
+          <p className="subtitle">Join AI Kanban today</p>
+
+
+          <form onSubmit={handleSignup} className="form">
             <label className="label">
               <span>Email</span>
               <input
@@ -109,6 +120,7 @@ function LoginPage() {
                 required
               />
             </label>
+
 
             <label className="label">
               <span>Password</span>
@@ -131,21 +143,26 @@ function LoginPage() {
               </div>
             </label>
 
+
             {error && <div className="error">{error}</div>}
 
+
             <button type="submit" className="btn btn--primary" disabled={loading}>
-              {loading ? "Logging in..." : "Log In"}
+              {loading ? "Creating..." : "Sign Up"}
             </button>
 
-            <div className="divider">or</div>
 
-            <Link to="/signup" className="btn btn--outline">
-              Create Account
+            <div className="divider">Already have an account?</div>
+
+
+            <Link to="/" className="btn btn--outline">
+              Back to Login
             </Link>
           </form>
         </div>
 
-        {/* Right: Slideshow */}
+
+        {/* Right Side: Slideshow */}
         <div className="auth-right">
           {slides.map((slide, i) => (
             <div key={i} className={`slide ${i === slideIndex ? "active" : ""}`}>
@@ -165,4 +182,8 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+
+export default SignupPage;
+
+
+

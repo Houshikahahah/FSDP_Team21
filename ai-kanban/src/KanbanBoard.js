@@ -1,58 +1,73 @@
 import "./KanbanBoard.css";
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { io } from "socket.io-client";
 
-const socket = io("http://localhost:5000", {
-  withCredentials: true,
-  transports: ["websocket", "polling"],
-});
-
-function KanbanBoard() {
+function KanbanBoard({ socket, tasks, user }) {
   const [columns, setColumns] = useState({
     todo: [],
     progress: [],
     done: [],
   });
+
+  const [board, setBoard] = useState("personal");
+
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+
   const [selectedTask, setSelectedTask] = useState(null);
   const [copied, setCopied] = useState(false);
+
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-  useEffect(() => {
-    socket.on("loadTasks", updateColumns);
-    socket.on("updateTasks", updateColumns);
-    return () => {
-      socket.off("loadTasks");
-      socket.off("updateTasks");
-    };
-  }, []);
 
-  const updateColumns = (tasks) => {
+
+  // Helper to update UI columns
+  const updateBoard = (list) => {
     setColumns({
-      todo: tasks.filter((task) => task.status === "todo"),
-      progress: tasks.filter((task) => task.status === "progress"),
-      done: tasks.filter((task) => task.status === "done"),
+      todo: list.filter((t) => t.status === "todo"),
+      progress: list.filter((t) => t.status === "progress"),
+      done: list.filter((t) => t.status === "done"),
     });
   };
 
+  // ============================================================
+  // 🔵 Sync incoming tasks (from App.js)
+  // ============================================================
+  useEffect(() => {
+    if (tasks) updateBoard(tasks);
+  }, [tasks]);
+
+  // ============================================================
+  // 🔷 ADD TASK
+  // ============================================================
   const handleAddTask = () => {
     if (!newTaskTitle.trim()) return alert("Please enter a task title!");
-    socket.emit("addTask", { title: newTaskTitle });
+    if (!socket) return alert("Not connected to server.");
+
+    socket.emit("addTask", { title: newTaskTitle, board });
+
     setNewTaskTitle("");
     setShowAddPopup(false);
   };
 
+  // ============================================================
+  // 🔶 DRAG AND DROP
+  // ============================================================
   const onDragEnd = (result) => {
+    if (!socket) return;
+
     const { source, destination } = result;
     if (!destination) return;
+
     const sourceCol = source.droppableId;
     const destCol = destination.droppableId;
+
     if (sourceCol === destCol) return;
 
     const movedTask = columns[sourceCol][source.index];
+
+    // Update UI instantly
     const updatedCols = { ...columns };
     updatedCols[sourceCol].splice(source.index, 1);
     updatedCols[destCol].splice(destination.index, 0, {
@@ -61,16 +76,51 @@ function KanbanBoard() {
     });
     setColumns(updatedCols);
 
-    setTimeout(() => {
-      socket.emit("taskMoved", {
-        taskId: movedTask.id,
-        newStatus: destCol,
-      });
-    }, 400);
+    // Tell server
+  socket.emit("taskMoved", {
+    taskId: movedTask.id,
+    newStatus: destCol,
+  });
+
   };
 
+  // ============================================================
+  // 🟣 RENAME TASK
+  // ============================================================
+  const startEditing = (task) => {
+    if (task.status !== "todo") return;
+    setEditingTaskId(task.id);
+    setEditingTitle(task.title);
+  };
+
+  const saveEdit = (taskId) => {
+    if (!socket) return;
+    if (!editingTitle.trim()) {
+      setEditingTaskId(null);
+      return;
+    }
+
+    socket.emit("renameTask", { taskId, newTitle: editingTitle });
+
+    setEditingTaskId(null);
+    setEditingTitle("");
+  };
+
+  // ============================================================
+  // 🔴 DELETE TASK
+  // ============================================================
+  const deleteTask = (taskId) => {
+    if (!socket) return;
+    if (window.confirm("Delete this task?")) {
+      socket.emit("deleteTask", { taskId, board });
+    }
+  };
+
+  // ============================================================
+  // 🟢 AI POPUP OUTPUT COPY
+  // ============================================================
   const copyOutput = () => {
-    if (selectedTask && selectedTask.ai_output) {
+    if (selectedTask?.ai_output) {
       navigator.clipboard.writeText(selectedTask.ai_output);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -81,90 +131,50 @@ function KanbanBoard() {
     if (task.status === "done") setSelectedTask(task);
   };
 
-  const startEditing = (task) => {
-    if (task.status !== "todo") return;
-    setEditingTaskId(task.id);
-    setEditingTitle(task.title);
-  };
-
-  const saveEdit = (taskId) => {
-    if (!editingTitle.trim()) {
-      setEditingTaskId(null);
-      return;
-    }
-    socket.emit("renameTask", { taskId, newTitle: editingTitle });
-    setEditingTaskId(null);
-    setEditingTitle("");
-  };
-
-  const deleteTask = (taskId) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      socket.emit("deleteTask", { taskId });
-    }
-  };
-
+  // ============================================================
+  // UI RENDER
+  // ============================================================
   return (
     <div className="kanban-container">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="logo">
-          <div className="logo-placeholder"></div>
-        </div>
-
-        <div className="tasks-section">
-          <div className="tasks-header">
-            <span>Tasks</span>
-            <span className="task-count">
-              {columns.todo.length +
-                columns.progress.length +
-                columns.done.length}
-            </span>
-          </div>
-        </div>
-
-        <div className="main-section">
-          <div className="main-label">MAIN</div>
-          <div className="page-item">Dashboard</div>
-          <div className="page-item">Reports</div>
-          <div className="page-item">Settings</div>
-        </div>
-      </div>
-
-      {/* Main content */}
       <div className="main-content">
         <div className="header">
-          <div className="welcome">Welcome Back</div>
-          <div className="search-bar">
-            <input type="text" placeholder="Search..." />
-          </div>
-          <div className="header-icons">
-            <div className="icon-circle"></div>
-            <div className="icon-circle"></div>
-          </div>
+          <div className="welcome">Your Tasks</div>
         </div>
+        <div className="board-switch">
+  <button
+    className={board === "personal" ? "active" : ""}
+    onClick={() => {
+      setBoard("personal");
+      socket.emit("switchBoard", { board: "personal" });
+    }}
+  >
+    My Board
+  </button>
 
-        {/* Board */}
+  <button
+    className={board === "main" ? "active" : ""}
+    onClick={() => {
+      setBoard("main");
+      socket.emit("switchBoard", { board: "main" });
+    }}
+  >
+    Main Board
+  </button>
+</div>
+
         <div className="board">
           <DragDropContext onDragEnd={onDragEnd}>
-            {Object.entries(columns).map(([colId, tasks]) => (
+            {Object.entries(columns).map(([colId, list]) => (
               <Droppable droppableId={colId} key={colId}>
                 {(provided) => (
-                  <div
-                    ref={provided.innerRef}
-                    {...provided.droppableProps}
-                    className="column"
-                  >
+                  <div ref={provided.innerRef} {...provided.droppableProps} className="column">
                     <div className="column-header">
                       <div className="column-title">{colId.toUpperCase()}</div>
                     </div>
 
                     <div className="tasks-list">
-                      {tasks.map((task, index) => (
-                        <Draggable
-                          key={task.id}
-                          draggableId={task.id}
-                          index={index}
-                        >
+                      {list.map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id} index={index}>
                           {(provided) => (
                             <div
                               ref={provided.innerRef}
@@ -190,17 +200,20 @@ function KanbanBoard() {
                               {editingTaskId === task.id ? (
                                 <input
                                   value={editingTitle}
-                                  onChange={(e) =>
-                                    setEditingTitle(e.target.value)
-                                  }
+                                  onChange={(e) => setEditingTitle(e.target.value)}
                                   onBlur={() => saveEdit(task.id)}
-                                  onKeyDown={(e) =>
-                                    e.key === "Enter" && saveEdit(task.id)
-                                  }
+                                  onKeyDown={(e) => e.key === "Enter" && saveEdit(task.id)}
                                   autoFocus
                                 />
                               ) : (
+                                <>
                                 <div className="task-title">{task.title}</div>
+
+                                <div className="task-created-by">
+                                  Created by: {task.profiles?.username || "Unknown"}
+                                </div>
+                              </>
+                                
                               )}
 
                               <div className="task-description">
@@ -210,14 +223,18 @@ function KanbanBoard() {
                           )}
                         </Draggable>
                       ))}
+
                       {provided.placeholder}
 
+                      {colId === "todo" && (
                       <button
                         className="add-task-btn"
                         onClick={() => setShowAddPopup(true)}
                       >
                         Add Task <span className="plus-icon">+</span>
                       </button>
+                    )}
+
                     </div>
                   </div>
                 )}
@@ -225,25 +242,23 @@ function KanbanBoard() {
             ))}
           </DragDropContext>
         </div>
+
       </div>
 
-      {/* View Task Popup */}
+      {/* ====================== AI POPUP ====================== */}
       {selectedTask && (
         <div className="popup-overlay" onClick={() => setSelectedTask(null)}>
-          <div
-            className="popup-card"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="popup-card" onClick={(e) => e.stopPropagation()}>
             <button className="popup-close" onClick={() => setSelectedTask(null)}>
               ✕
             </button>
             <h2>{selectedTask.title}</h2>
-            <p>
-              <strong>Status:</strong> {selectedTask.status}
-            </p>
+            <p><strong>Status:</strong> {selectedTask.status}</p>
+
             <div className="popup-content">
               {selectedTask.ai_output || "No AI output available."}
             </div>
+
             <div className="popup-footer">
               <button
                 className={`copy-btn ${copied ? "copied" : ""}`}
@@ -256,7 +271,7 @@ function KanbanBoard() {
         </div>
       )}
 
-      {/* Add Task Popup */}
+      {/* ====================== ADD TASK POPUP ====================== */}
       {showAddPopup && (
         <div className="popup-overlay" onClick={() => setShowAddPopup(false)}>
           <div className="popup-card" onClick={(e) => e.stopPropagation()}>
@@ -268,6 +283,7 @@ function KanbanBoard() {
               onChange={(e) => setNewTaskTitle(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
             />
+
             <div className="popup-actions">
               <button className="cancel-btn" onClick={() => setShowAddPopup(false)}>
                 Cancel
@@ -279,6 +295,7 @@ function KanbanBoard() {
           </div>
         </div>
       )}
+
     </div>
   );
 }
