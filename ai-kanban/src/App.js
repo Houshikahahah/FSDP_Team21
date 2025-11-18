@@ -5,42 +5,43 @@ import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 import OrgBoardPage from "./pages/OrgBoardPage";
+import Dashboard from "./Dashboard";
+import Layout from "./Layout";
 
 import { supabase } from "./supabaseClient";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // -----------------------------
-  // Load profile
-  // -----------------------------
   const loadProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
       return;
     }
 
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
       .maybeSingle();
 
+    if (error) console.error("Profile load error:", error);
+
     setProfile(data || null);
   };
 
-  // -----------------------------
-  // Initial load + session listener
-  // -----------------------------
   useEffect(() => {
     const init = async () => {
       const { data } = await supabase.auth.getUser();
       setUser(data.user);
 
       if (data.user) {
-        loadProfile(data.user.id);
+        await loadProfile(data.user.id);
       }
+
+      setLoading(false);
     };
 
     init();
@@ -51,7 +52,7 @@ export default function App() {
         setUser(currentUser);
 
         if (currentUser) {
-          loadProfile(currentUser.id);
+          await loadProfile(currentUser.id);
         } else {
           setProfile(null);
         }
@@ -61,14 +62,12 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // -----------------------------
-  // NO MORE LOADING SCREEN
-  // App renders instantly
-  // -----------------------------
+  if (loading) return <p>Loading...</p>;
 
   return (
     <BrowserRouter>
       <Routes>
+
         {/* LOGIN */}
         <Route
           path="/"
@@ -81,7 +80,7 @@ export default function App() {
           element={!user ? <SignupPage /> : <Navigate to="/organisations" />}
         />
 
-        {/* ORG DASHBOARD */}
+        {/* ORGANISATION PAGE — NO SIDEBAR */}
         <Route
           path="/organisations"
           element={
@@ -93,17 +92,34 @@ export default function App() {
           }
         />
 
-        {/* ORG BOARD */}
+        {/* KANBAN BOARD — WITH SIDEBAR */}
         <Route
           path="/org/:orgId"
           element={
             user ? (
-              <OrgBoardPage user={user} profile={profile} />
+              <Layout>
+                <OrgBoardPage user={user} profile={profile} />
+              </Layout>
             ) : (
               <Navigate to="/" />
             )
           }
         />
+
+        {/* DASHBOARD — WITH SIDEBAR */}
+        <Route
+          path="/dashboard"
+          element={
+            user ? (
+              <Layout>
+                <Dashboard />
+              </Layout>
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );

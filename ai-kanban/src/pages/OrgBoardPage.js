@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
@@ -70,8 +71,9 @@ export default function OrgBoardPage({ user, profile }) {
   }, [orgId, user]);
 
   return (
-    <div style={{ padding: "1.5rem" }}>
-      <button
+    <div className="org-layout">
+
+      {/* <button
         style={{
           padding: "6px 12px",
           borderRadius: "6px",
@@ -81,8 +83,8 @@ export default function OrgBoardPage({ user, profile }) {
         onClick={() => navigate("/organisations")}
       >
         ← Back to Workspaces
-      </button>
-
+      </button> */}
+{/* 
       <h1>{orgInfo?.name || "Workspace"}</h1>
       <p>
         Logged in as: <strong>{displayName}</strong>
@@ -100,7 +102,7 @@ export default function OrgBoardPage({ user, profile }) {
         </ul>
       </div>
 
-      <hr />
+      <hr /> */}
 
       {socket ? (
         <KanbanBoard socket={socket} tasks={tasks} user={user} />

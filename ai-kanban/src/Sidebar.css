@@ -1,0 +1,85 @@
+.sidebar {
+  width: 230px;
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e2e2e2;
+  padding: 25px 20px;
+  box-sizing: border-box;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;  /* <-- FORCE LEFT ALIGN */
+  text-align: left;         /* <-- FORCE LEFT ALIGN */
+}
+
+
+/* --- TITLE --- */
+.side-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #6a3df0;
+  margin-bottom: 40px;
+  text-align: left;     /* ensure left alignment */
+}
+
+/* --- MAIN NAVIGATION LIST --- */
+.side-links {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* --- LINK STYLE --- */
+.side-link {
+  text-decoration: none;
+  color: #444;
+  font-size: 15px;
+  padding: 10px 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: 0.2s ease;
+}
+
+/* Icon style */
+.side-link .icon {
+  font-size: 18px;
+  color: #777;
+}
+
+/* --- HOVER --- */
+.side-link:hover {
+  background: #f3f3ff;
+  color: #6a3df0;
+  padding-left: 14px;
+}
+
+.side-link:hover .icon {
+  color: #6a3df0;
+}
+
+/* --- ACTIVE LINK --- */
+.side-link.active {
+  background: #e9e4ff;
+  color: #6a3df0;
+  font-weight: 600;
+}
+
+.side-link.active .icon {
+  color: #6a3df0;
+}
+
+/* --- BOTTOM SECTION WRAPPER --- */
+.side-bottom {
+  width: 100%;               /* <-- make it span full sidebar width */
+  margin-top: auto;
+  padding-top: 25px;
+  border-top: 1px solid #ddd;  /* longer visible line */
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
