@@ -9,7 +9,7 @@ function KanbanBoard({ socket, tasks, user }) {
     done: [],
   });
 
-  const [board, setBoard] = useState("personal");
+  const [board, setBoard] = useState("personal"); // "personal" | "main"
 
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
@@ -20,22 +20,24 @@ function KanbanBoard({ socket, tasks, user }) {
   const [editingTaskId, setEditingTaskId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
 
-
-
   // Helper to update UI columns
   const updateBoard = (list) => {
+    const safeList = Array.isArray(list) ? list : [];
     setColumns({
-      todo: list.filter((t) => t.status === "todo"),
-      progress: list.filter((t) => t.status === "progress"),
-      done: list.filter((t) => t.status === "done"),
+      todo: safeList.filter((t) => t.status === "todo"),
+      progress: safeList.filter((t) => t.status === "progress"),
+      done: safeList.filter((t) => t.status === "done"),
     });
   };
 
   // ============================================================
-  // 🔵 Sync incoming tasks (from App.js)
+  // 🔵 Sync incoming tasks (from OrgBoardPage socket handlers)
   // ============================================================
   useEffect(() => {
-    if (tasks) updateBoard(tasks);
+    if (tasks) {
+      console.log("[KanbanBoard] tasks prop changed:", tasks);
+      updateBoard(tasks);
+    }
   }, [tasks]);
 
   // ============================================================
@@ -45,7 +47,7 @@ function KanbanBoard({ socket, tasks, user }) {
     if (!newTaskTitle.trim()) return alert("Please enter a task title!");
     if (!socket) return alert("Not connected to server.");
 
-    socket.emit("addTask", { title: newTaskTitle, board });
+    socket.emit("addTask", { title: newTaskTitle });
 
     setNewTaskTitle("");
     setShowAddPopup(false);
@@ -66,9 +68,13 @@ function KanbanBoard({ socket, tasks, user }) {
     if (sourceCol === destCol) return;
 
     const movedTask = columns[sourceCol][source.index];
+    if (!movedTask) return;
 
     // Update UI instantly
     const updatedCols = { ...columns };
+    updatedCols[sourceCol] = Array.from(updatedCols[sourceCol]);
+    updatedCols[destCol] = Array.from(updatedCols[destCol]);
+
     updatedCols[sourceCol].splice(source.index, 1);
     updatedCols[destCol].splice(destination.index, 0, {
       ...movedTask,
@@ -77,11 +83,10 @@ function KanbanBoard({ socket, tasks, user }) {
     setColumns(updatedCols);
 
     // Tell server
-  socket.emit("taskMoved", {
-    taskId: movedTask.id,
-    newStatus: destCol,
-  });
-
+    socket.emit("taskMoved", {
+      taskId: movedTask.id,
+      newStatus: destCol,
+    });
   };
 
   // ============================================================
@@ -112,7 +117,7 @@ function KanbanBoard({ socket, tasks, user }) {
   const deleteTask = (taskId) => {
     if (!socket) return;
     if (window.confirm("Delete this task?")) {
-      socket.emit("deleteTask", { taskId, board });
+      socket.emit("deleteTask", { taskId });
     }
   };
 
@@ -132,49 +137,65 @@ function KanbanBoard({ socket, tasks, user }) {
   };
 
   // ============================================================
+  // BOARD SWITCH HANDLERS
+  // ============================================================
+  const switchToBoard = (targetBoard) => {
+    if (!socket) return;
+    if (board === targetBoard) return;
+
+    setBoard(targetBoard);
+    socket.emit("switchBoard", { board: targetBoard });
+  };
+
+  // ============================================================
   // UI RENDER
   // ============================================================
   return (
     <div className="kanban-container">
       <div className="main-content">
         <div className="header">
-          <div className="welcome">Your Tasks</div>
+          <div className="welcome">
+            {board === "personal" ? "Your Tasks" : "Team Tasks"}
+          </div>
         </div>
-        <div className="board-switch">
-  <button
-    className={board === "personal" ? "active" : ""}
-    onClick={() => {
-      setBoard("personal");
-      socket.emit("switchBoard", { board: "personal" });
-    }}
-  >
-    My Board
-  </button>
 
-  <button
-    className={board === "main" ? "active" : ""}
-    onClick={() => {
-      setBoard("main");
-      socket.emit("switchBoard", { board: "main" });
-    }}
-  >
-    Main Board
-  </button>
-</div>
+        <div className="board-switch">
+          <button
+            className={board === "personal" ? "active" : ""}
+            onClick={() => switchToBoard("personal")}
+          >
+            My Board
+          </button>
+
+          <button
+            className={board === "main" ? "active" : ""}
+            onClick={() => switchToBoard("main")}
+          >
+            Main Board
+          </button>
+        </div>
 
         <div className="board">
           <DragDropContext onDragEnd={onDragEnd}>
             {Object.entries(columns).map(([colId, list]) => (
               <Droppable droppableId={colId} key={colId}>
                 {(provided) => (
-                  <div ref={provided.innerRef} {...provided.droppableProps} className="column">
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className="column"
+                  >
                     <div className="column-header">
                       <div className="column-title">{colId.toUpperCase()}</div>
                     </div>
 
                     <div className="tasks-list">
                       {list.map((task, index) => (
-                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                        <Draggable
+                          key={task.id}
+                          draggableId={String(task.id)}
+                          index={index}
+                        >
                           {(provided) => (
                             <div
                               ref={provided.innerRef}
@@ -200,20 +221,26 @@ function KanbanBoard({ socket, tasks, user }) {
                               {editingTaskId === task.id ? (
                                 <input
                                   value={editingTitle}
-                                  onChange={(e) => setEditingTitle(e.target.value)}
+                                  onChange={(e) =>
+                                    setEditingTitle(e.target.value)
+                                  }
                                   onBlur={() => saveEdit(task.id)}
-                                  onKeyDown={(e) => e.key === "Enter" && saveEdit(task.id)}
+                                  onKeyDown={(e) =>
+                                    e.key === "Enter" && saveEdit(task.id)
+                                  }
                                   autoFocus
                                 />
                               ) : (
                                 <>
-                                <div className="task-title">{task.title}</div>
+                                  <div className="task-title">
+                                    {task.title}
+                                  </div>
 
-                                <div className="task-created-by">
-                                  Created by: {task.profiles?.username || "Unknown"}
-                                </div>
-                              </>
-                                
+                                  <div className="task-created-by">
+                                    Created by:{" "}
+                                    {task.profiles?.username || "Unknown"}
+                                  </div>
+                                </>
                               )}
 
                               <div className="task-description">
@@ -227,14 +254,13 @@ function KanbanBoard({ socket, tasks, user }) {
                       {provided.placeholder}
 
                       {colId === "todo" && (
-                      <button
-                        className="add-task-btn"
-                        onClick={() => setShowAddPopup(true)}
-                      >
-                        Add Task <span className="plus-icon">+</span>
-                      </button>
-                    )}
-
+                        <button
+                          className="add-task-btn"
+                          onClick={() => setShowAddPopup(true)}
+                        >
+                          Add Task <span className="plus-icon">+</span>
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -242,18 +268,28 @@ function KanbanBoard({ socket, tasks, user }) {
             ))}
           </DragDropContext>
         </div>
-
       </div>
 
       {/* ====================== AI POPUP ====================== */}
       {selectedTask && (
-        <div className="popup-overlay" onClick={() => setSelectedTask(null)}>
-          <div className="popup-card" onClick={(e) => e.stopPropagation()}>
-            <button className="popup-close" onClick={() => setSelectedTask(null)}>
+        <div
+          className="popup-overlay"
+          onClick={() => setSelectedTask(null)}
+        >
+          <div
+            className="popup-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="popup-close"
+              onClick={() => setSelectedTask(null)}
+            >
               ✕
             </button>
             <h2>{selectedTask.title}</h2>
-            <p><strong>Status:</strong> {selectedTask.status}</p>
+            <p>
+              <strong>Status:</strong> {selectedTask.status}
+            </p>
 
             <div className="popup-content">
               {selectedTask.ai_output || "No AI output available."}
@@ -273,8 +309,14 @@ function KanbanBoard({ socket, tasks, user }) {
 
       {/* ====================== ADD TASK POPUP ====================== */}
       {showAddPopup && (
-        <div className="popup-overlay" onClick={() => setShowAddPopup(false)}>
-          <div className="popup-card" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="popup-overlay"
+          onClick={() => setShowAddPopup(false)}
+        >
+          <div
+            className="popup-card"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3>Add New Task</h3>
             <input
               type="text"
@@ -285,7 +327,10 @@ function KanbanBoard({ socket, tasks, user }) {
             />
 
             <div className="popup-actions">
-              <button className="cancel-btn" onClick={() => setShowAddPopup(false)}>
+              <button
+                className="cancel-btn"
+                onClick={() => setShowAddPopup(false)}
+              >
                 Cancel
               </button>
               <button className="add-btn" onClick={handleAddTask}>
@@ -295,7 +340,6 @@ function KanbanBoard({ socket, tasks, user }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
