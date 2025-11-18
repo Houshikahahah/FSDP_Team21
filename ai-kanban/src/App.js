@@ -16,6 +16,7 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Load user profile from "profiles" table
   const loadProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
@@ -33,22 +34,34 @@ export default function App() {
     setProfile(data || null);
   };
 
+  // AUTH SYSTEM — FIXED & STABLE VERSION
   useEffect(() => {
+    let ignore = false;
+
     const init = async () => {
-      const { data } = await supabase.auth.getUser();
-      setUser(data.user);
+      // ❤️ FIX: getSession() never returns null incorrectly
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (data.user) {
-        await loadProfile(data.user.id);
+      if (!ignore) {
+        setUser(session?.user || null);
+
+        if (session?.user) {
+          await loadProfile(session.user.id);
+        }
+
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     init();
 
+    // Listen for login/logout/refresh events
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        if (ignore) return;
+
         const currentUser = session?.user || null;
         setUser(currentUser);
 
@@ -60,10 +73,20 @@ export default function App() {
       }
     );
 
-    return () => listener.subscription.unsubscribe();
+    return () => {
+      ignore = true;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
-  if (loading) return <p>Loading...</p>;
+  // Loading UI (simple, non-blocking)
+  if (loading) {
+    return (
+      <div style={{ padding: "2rem", fontSize: "20px" }}>
+        Initializing...
+      </div>
+    );
+  }
 
   return (
     <BrowserRouter>
@@ -81,7 +104,7 @@ export default function App() {
           element={!user ? <SignupPage /> : <Navigate to="/organisations" />}
         />
 
-        {/* ORGANISATION PAGE — NO SIDEBAR */}
+        {/* HOME ORG PAGE (no sidebar) */}
         <Route
           path="/organisations"
           element={
@@ -93,7 +116,7 @@ export default function App() {
           }
         />
 
-        {/* KANBAN BOARD — WITH SIDEBAR */}
+        {/* KANBAN BOARD (with sidebar) */}
         <Route
           path="/org/:orgId"
           element={
@@ -107,13 +130,13 @@ export default function App() {
           }
         />
 
-        {/* DASHBOARD — WITH SIDEBAR */}
+        {/* ANALYTICS DASHBOARD (with sidebar) */}
         <Route
           path="/dashboard"
           element={
             user ? (
               <Layout>
-                <Dashboard />
+                <Dashboard user={user} profile={profile} />
               </Layout>
             ) : (
               <Navigate to="/" />
@@ -125,10 +148,13 @@ export default function App() {
         <Route
           path="/org/:orgId/workitems"
           element={
-            user ? <WorkItems user={user} profile={profile} /> : <Navigate to="/" />
+            user ? (
+              <WorkItems user={user} profile={profile} />
+            ) : (
+              <Navigate to="/" />
+            )
           }
         />
-
 
       </Routes>
     </BrowserRouter>
