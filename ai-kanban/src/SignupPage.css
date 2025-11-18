@@ -199,5 +199,38 @@ body {
   }
 }
 
+/* ============================
+   GLOBAL CURSOR FIX
+   ============================ */
+
+.auth-wrapper,
+.auth-card,
+.auth-left,
+.auth-right,
+.slide,
+.label,
+.subtitle,
+.brand,
+.divider,
+.dots,
+.dot,
+.form,
+.password,
+.btn,
+.input {
+  user-select: none;
+  cursor: default;
+}
+
+/* Allow clicking on valid elements */
+.input,
+button,
+.btn,
+.password__toggle,
+.theme-toggle,
+a {
+  cursor: pointer;
+  user-select: none;
+}
 
 
