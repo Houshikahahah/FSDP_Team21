@@ -14,6 +14,8 @@ import {
 export default function OrganisationDashboard({ user, profile }) {
   const navigate = useNavigate();
 
+  // SAFE DISPLAY NAME
+  const displayName = profile?.username || "User";
   const [organisations, setOrganisations] = useState([]);
   const [members, setMembers] = useState({});
   const [loading, setLoading] = useState(true);
@@ -165,9 +167,11 @@ export default function OrganisationDashboard({ user, profile }) {
         <button style={styles.filterBtn}>⏳</button>
       </div>
 
-      {/* CREATE ORG */}
-      <h2 style={styles.sectionHeader}>Create Organisation</h2>
-      <div style={styles.row}>
+      <h1>Welcome, {profile?.username}</h1>
+
+      {/* CREATE */}
+      <div style={{ marginTop: "2rem" }}>
+        <h2>Create Organisation</h2>
         <input
           style={styles.input}
           placeholder="Organisation Name"
@@ -218,31 +222,36 @@ export default function OrganisationDashboard({ user, profile }) {
                 Open Board →
               </button>
 
-              {org.owner_id === user.id ? (
-                <button
-                  style={styles.deleteBtn}
-                  onClick={() => handleDeleteOrg(org.id)}
-                >
-                  Delete Org
-                </button>
-              ) : (
-                <button
-                  style={styles.leaveBtn}
-                  onClick={() => handleLeave(org.id)}
-                >
-                  Leave
-                </button>
-              )}
-            </div>
-          </div>
+            {/* Leave */}
+            {org.owner_id !== user.id && (
+              <button
+                onClick={() => handleLeave(org.id)}
+                style={{
+                  marginLeft: "10px",
+                  background: "#d9534f",
+                  color: "white",
+                  padding: "6px 10px",
+                }}
+              >
+                Leave
+              </button>
+            )}
 
-          <div style={styles.cardRight}>
-            <h4 style={styles.membersHeader}>Members:</h4>
-            {members[org.id]?.map((m) => (
-              <div key={m.user_id} style={styles.memberItem}>
-                {m.username} — {m.role}
-              </div>
-            ))}
+            {/* DELETE ORG (OWNER ONLY) */}
+            {org.owner_id === user.id && (
+              <button
+                onClick={() => handleDeleteOrg(org.id)}
+                style={{
+                  marginLeft: "10px",
+                  background: "#b30000",
+                  color: "white",
+                  padding: "6px 10px",
+                  borderRadius: "4px",
+                }}
+              >
+                Delete Org
+              </button>
+            )}
           </div>
         </div>
       ))}
