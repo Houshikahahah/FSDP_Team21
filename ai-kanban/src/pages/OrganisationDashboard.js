@@ -21,6 +21,7 @@ export default function OrganisationDashboard({ user, profile }) {
   const [newOrgName, setNewOrgName] = useState("");
   const [joinName, setJoinName] = useState("");
   const [joinPin, setJoinPin] = useState("");
+  const [search, setSearch] = useState("");
 
   // LOAD DATA
   const loadData = async () => {
@@ -62,7 +63,6 @@ export default function OrganisationDashboard({ user, profile }) {
     return () => supabase.removeChannel(channel);
   }, [user]);
 
-  // MEMBER updates
   useEffect(() => {
     if (!user || organisations.length === 0) return;
 
@@ -103,8 +103,7 @@ export default function OrganisationDashboard({ user, profile }) {
   };
 
   const handleJoinOrg = async () => {
-    if (!joinName.trim() || !joinPin.trim())
-      return alert("Enter all fields");
+    if (!joinName.trim() || !joinPin.trim()) return alert("Enter all fields");
 
     const { error } = await joinOrganisation(joinName, joinPin, user.id);
     if (error) return alert(error.message);
@@ -122,8 +121,7 @@ export default function OrganisationDashboard({ user, profile }) {
   };
 
   const handleDeleteOrg = async (orgId) => {
-    if (!window.confirm("Delete this organisation? This cannot be undone."))
-      return;
+    if (!window.confirm("Delete this organisation?")) return;
 
     const { error } = await deleteOrganisation(orgId, user.id);
     if (error) return alert(error.message);
@@ -133,127 +131,306 @@ export default function OrganisationDashboard({ user, profile }) {
 
   if (loading) return <p>Loading...</p>;
 
+  // FILTER WORKSPACES
+  const filtered = organisations.filter((org) =>
+    org.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
-    <div style={{ padding: "2rem", position: "relative" }}>
-      {/* TOP RIGHT */}
-      <div style={{ position: "absolute", top: 20, right: 20 }}>
-        <button
-          onClick={handleLogout}
-          style={{
-            padding: "6px 12px",
-            background: "#d9534f",
-            color: "white",
-            borderRadius: "4px",
-          }}
-        >
-          Logout
-        </button>
+    <div style={styles.page}>
+
+      {/* Logout */}
+      <button onClick={handleLogout} style={styles.logoutBtn}>
+        Logout
+      </button>
+
+      {/* Profile */}
+      <div style={styles.profile}></div>
+
+      <h1 style={styles.title}>
+        Welcome, <span style={{ color: "#695CEB" }}>{profile?.username}</span>
+      </h1>
+
+      {/* SEARCH BAR */}
+      <div style={styles.searchContainer}>
+        <div style={styles.searchBox}>
+          <span style={styles.searchIcon}>🔍</span>
+          <input
+            placeholder="Search for a workspace..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={styles.searchInput}
+          />
+        </div>
+        <button style={styles.filterBtn}>⏳</button>
       </div>
 
-      <h1>Welcome, {profile?.username}</h1>
-
-      {/* CREATE */}
-      <div style={{ marginTop: "2rem" }}>
-        <h2>Create Organisation</h2>
+      {/* CREATE ORG */}
+      <h2 style={styles.sectionHeader}>Create Organisation</h2>
+      <div style={styles.row}>
         <input
-          placeholder="Org Name"
+          style={styles.input}
+          placeholder="Organisation Name"
           value={newOrgName}
           onChange={(e) => setNewOrgName(e.target.value)}
         />
-        <button onClick={handleCreateOrg} style={{ marginLeft: "8px" }}>
+        <button style={styles.primaryBtn} onClick={handleCreateOrg}>
           Create
         </button>
       </div>
 
-      {/* JOIN */}
-      <div style={{ marginTop: "2rem" }}>
-        <h2>Join Organisation</h2>
+      {/* JOIN ORG */}
+      <h2 style={styles.sectionHeader}>Join Organisation</h2>
+      <div style={styles.row}>
         <input
+          style={styles.input}
           placeholder="Organisation Name"
           value={joinName}
           onChange={(e) => setJoinName(e.target.value)}
         />
         <input
+          style={{ ...styles.input, width: "120px" }}
           placeholder="PIN"
           value={joinPin}
-          style={{ marginLeft: "8px" }}
           onChange={(e) => setJoinPin(e.target.value)}
         />
-        <button onClick={handleJoinOrg} style={{ marginLeft: "8px" }}>
+        <button style={styles.primaryBtn} onClick={handleJoinOrg}>
           Join
         </button>
       </div>
 
       {/* WORKSPACES */}
-      <h2 style={{ marginTop: "3rem" }}>Your Workspaces</h2>
+      <h2 style={styles.sectionHeader}>Your Workspaces</h2>
 
-      {organisations.length === 0 ? (
-        <p>No organisations yet.</p>
-      ) : (
-        organisations.map((org) => (
-          <div
-            key={org.id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "1rem",
-              borderRadius: "8px",
-              marginBottom: "1rem",
-            }}
-          >
-            <h3>{org.name}</h3>
-            <p>
+      {filtered.map((org) => (
+        <div key={org.id} style={styles.card}>
+          <div style={styles.cardLeft}>
+            <h3 style={styles.cardTitle}>{org.name}</h3>
+            <p style={styles.pin}>
               <strong>PIN:</strong> {org.pin}
             </p>
 
-            <strong>Members:</strong>
-            <ul>
-              {members[org.id]?.map((m) => (
-                <li key={m.user_id}>
-                  {m.username} — {m.role}
-                </li>
-              ))}
-            </ul>
-
-            <button
-              onClick={() => navigate(`/org/${org.id}`)}
-              style={{ marginTop: "10px" }}
-            >
-              Open Board →
-            </button>
-
-            {/* Leave */}
-            {org.owner_id !== user.id && (
+            <div style={styles.buttonRow}>
               <button
-                onClick={() => handleLeave(org.id)}
-                style={{
-                  marginLeft: "10px",
-                  background: "#d9534f",
-                  color: "white",
-                  padding: "6px 10px",
-                }}
+                style={styles.primaryBtn}
+                onClick={() => navigate(`/org/${org.id}`)}
               >
-                Leave
+                Open Board →
               </button>
-            )}
 
-            {/* DELETE ORG (OWNER ONLY) */}
-            {org.owner_id === user.id && (
-              <button
-                onClick={() => handleDeleteOrg(org.id)}
-                style={{
-                  marginLeft: "10px",
-                  background: "#b30000",
-                  color: "white",
-                  padding: "6px 10px",
-                  borderRadius: "4px",
-                }}
-              >
-                Delete Org
-              </button>
-            )}
+              {org.owner_id === user.id ? (
+                <button
+                  style={styles.deleteBtn}
+                  onClick={() => handleDeleteOrg(org.id)}
+                >
+                  Delete Org
+                </button>
+              ) : (
+                <button
+                  style={styles.leaveBtn}
+                  onClick={() => handleLeave(org.id)}
+                >
+                  Leave
+                </button>
+              )}
+            </div>
           </div>
-        ))
-      )}
+
+          <div style={styles.cardRight}>
+            <h4 style={styles.membersHeader}>Members:</h4>
+            {members[org.id]?.map((m) => (
+              <div key={m.user_id} style={styles.memberItem}>
+                {m.username} — {m.role}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
+
+/* ============================================================
+   💅 UPDATED STYLES (input smaller + cards moved left)
+   ============================================================ */
+
+const styles = {
+  page: {
+    padding: "2.5rem",
+    minHeight: "100vh",
+    background: "linear-gradient(180deg, #F7F8FB, #ECEEF7)",
+    fontFamily: "Inter, sans-serif",
+    color: "#1A1A1A",
+    position: "relative",
+  },
+
+  title: {
+    fontSize: "2.2rem",
+    fontWeight: 800,
+    marginBottom: "1.5rem",
+  },
+
+  logoutBtn: {
+    position: "absolute",
+    top: 25,
+    right: 110,
+    background: "#E45050",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "8px",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: 600,
+    boxShadow: "0 3px 10px rgba(0,0,0,0.12)",
+  },
+
+  profile: {
+    position: "absolute",
+    top: 20,
+    right: 25,
+    width: "55px",
+    height: "55px",
+    background: "#FFFFFF",
+    borderRadius: "50%",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+
+  /* SEARCH BAR */
+  searchContainer: {
+    display: "flex",
+    gap: "10px",
+    alignItems: "center",
+    marginBottom: "2.5rem",
+    maxWidth: "450px",
+    marginLeft: "0",
+  },
+
+  searchBox: {
+    background: "#fff",
+    display: "flex",
+    alignItems: "center",
+    padding: "10px 16px",
+    borderRadius: "12px",
+    width: "100%",
+    border: "1px solid #DDD",
+    boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
+  },
+
+  searchIcon: { opacity: 0.55, marginRight: "8px" },
+
+  searchInput: {
+    border: "none",
+    outline: "none",
+    width: "100%",
+    fontSize: "0.95rem",
+  },
+
+  filterBtn: {
+    padding: "10px",
+    borderRadius: "10px",
+    background: "#fff",
+    border: "1px solid #DDD",
+    cursor: "pointer",
+    boxShadow: "0 3px 10px rgba(0,0,0,0.06)",
+  },
+
+  /* SECTION HEADERS */
+  sectionHeader: {
+    fontSize: "1.35rem",
+    fontWeight: 700,
+    marginBottom: "8px",
+    marginTop: "1rem",
+  },
+
+  /* INPUT ROW — made smaller + aligned left */
+  row: {
+    display: "flex",
+    gap: "10px",
+    maxWidth: "650px",
+    marginBottom: "2rem",
+    marginLeft: "0",
+  },
+
+  input: {
+    padding: "11px 13px",
+    background: "#fff",
+    borderRadius: "10px",
+    border: "1px solid #CCC",
+    fontSize: "1rem",
+    width: "100%",
+    maxWidth: "400px",
+    boxShadow: "0 3px 8px rgba(0,0,0,0.03)",
+  },
+
+  primaryBtn: {
+    background: "#695CEB",
+    padding: "11px 20px",
+    borderRadius: "10px",
+    color: "#fff",
+    fontWeight: 600,
+    border: "none",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+    boxShadow: "0 4px 12px rgba(105,92,235,0.25)",
+  },
+
+  deleteBtn: {
+    background: "#E45050",
+    border: "none",
+    padding: "11px 18px",
+    borderRadius: "10px",
+    color: "#fff",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+
+  leaveBtn: {
+    background: "#F2A642",
+    border: "none",
+    padding: "11px 18px",
+    borderRadius: "10px",
+    color: "#fff",
+    fontWeight: 600,
+    cursor: "pointer",
+  },
+
+  /* WORKSPACE CARD — moved left */
+  card: {
+    background: "#fff",
+    padding: "1.6rem 1.8rem",
+    borderRadius: "18px",
+    boxShadow: "0 6px 20px rgba(0,0,0,0.07)",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: "1.5rem",
+
+    maxWidth: "900px",   // smaller
+    marginLeft: "0",     // pushed left
+    marginRight: "auto",
+  },
+
+  cardLeft: { flex: 1, paddingRight: "1rem" },
+
+  cardRight: {
+    flex: 1,
+    paddingLeft: "2rem",
+    borderLeft: "1px solid #EEE",
+  },
+
+  cardTitle: { margin: 0, fontSize: "1.25rem", fontWeight: 700 },
+
+  pin: { marginTop: "4px", marginBottom: "1rem", color: "#444" },
+
+  buttonRow: { display: "flex", gap: "12px", marginTop: "8px" },
+
+  membersHeader: {
+    fontWeight: 700,
+    marginBottom: "6px",
+  },
+
+  memberItem: {
+    marginBottom: "5px",
+    color: "#444",
+  },
+};
