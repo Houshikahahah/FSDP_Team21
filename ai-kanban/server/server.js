@@ -1,4 +1,4 @@
-// ====================== ENV & IMPORTS ======================
+
 require("dotenv").config();
 const fetch = (...args) =>
   import("node-fetch").then(({ default: fetch }) => fetch(...args));
@@ -13,6 +13,7 @@ const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_KEY
 );
+// ====================== ENV & IMPORTS ======================
 
 // ====================== AI via OpenRouter ======================
 async function processTaskWithClaude(taskTitle) {
@@ -53,31 +54,53 @@ async function processTaskWithClaude(taskTitle) {
 }
 
 // ====================== TASK HELPERS ======================
+// NOTE: we keep "board" logic here and filter using is_main_board
 async function getTasks(socket) {
   const { orgId, userId, board } = socket;
-
-  // MAIN BOARD: all tasks in org
-  if (board === "main") {
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("*, profiles:profiles(id, username, avatar_color)")
-      .eq("organisation_id", orgId);
-
-    if (error) console.error(error);
-    return data || [];
+  if (!orgId) {
+    console.error("getTasks called without orgId");
+    return [];
   }
 
-  // PERSONAL BOARD: only user's tasks
-  const { data, error } = await supabase
-    .from("tasks")
-    .select("*, profiles:profiles(id, username, avatar_color)")
-    .eq("organisation_id", orgId)
-    .eq("user_id", userId);
+  try {
+    // MAIN BOARD = org-wide tasks (is_main_board = true)
+    if (board === "main") {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("organisation_id", orgId)
+        .eq("is_main_board", true);
 
-  if (error) console.error(error);
-  return data || [];
+      if (error) {
+        console.error("getTasks (main) error:", error);
+        return [];
+      }
+      return data || [];
+    }
+
+    // PERSONAL BOARD = tasks owned by this user (is_main_board = false)
+    if (!userId) {
+      console.error("getTasks (personal) missing userId");
+      return [];
+    }
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("organisation_id", orgId)
+      .eq("user_id", userId)
+      .eq("is_main_board", false);
+
+    if (error) {
+      console.error("getTasks (personal) error:", error);
+      return [];
+    }
+    return data || [];
+  } catch (err) {
+    console.error("getTasks unexpected error:", err);
+    return [];
+  }
 }
-
 
 async function updateTask(taskId, updates) {
   const { error } = await supabase.from("tasks").update(updates).eq("id", taskId);
@@ -105,18 +128,24 @@ io.on("connection", async (socket) => {
   socket.board = board || "personal";
 
   // Join board-level room
-  socket.join(`${orgId}:${socket.board}`);
+  socket.join(`${socket.orgId}:${socket.board}`);
 
   console.log(
-    `🔗 User ${socket.id} joined Org ${orgId}, Board = ${socket.board}`
+    `🔗 User ${socket.id} joined Org ${socket.orgId}, Board = ${socket.board}`
   );
 
+  // initial load
   socket.emit("loadTasks", await getTasks(socket));
 
   // ========= SWITCH BOARD =========
   socket.on("switchBoard", async ({ board }) => {
-    socket.leave(`${socket.orgId}:${socket.board}`);
+    if (!board) return;
 
+    console.log(
+      `🔀 ${socket.id} switching board ${socket.board} -> ${board}`
+    );
+
+    socket.leave(`${socket.orgId}:${socket.board}`);
     socket.board = board;
     socket.join(`${socket.orgId}:${board}`);
 
@@ -125,9 +154,11 @@ io.on("connection", async (socket) => {
 
   // ========= ADD TASK =========
   socket.on("addTask", async ({ title }) => {
+    if (!title || !socket.orgId || !socket.userId) return;
+
     const isMain = socket.board === "main";
 
-    await supabase.from("tasks").insert([
+    const { error } = await supabase.from("tasks").insert([
       {
         title,
         status: "todo",
@@ -137,6 +168,11 @@ io.on("connection", async (socket) => {
       },
     ]);
 
+    if (error) {
+      console.error("Add task error:", error);
+      return;
+    }
+
     io.to(`${socket.orgId}:${socket.board}`).emit(
       "updateTasks",
       await getTasks(socket)
@@ -145,6 +181,8 @@ io.on("connection", async (socket) => {
 
   // ========= MOVE TASK =========
   socket.on("taskMoved", async ({ taskId, newStatus }) => {
+    if (!taskId || !newStatus) return;
+
     await updateTask(taskId, {
       status: newStatus,
       updated_at: new Date().toISOString(),
@@ -158,6 +196,8 @@ io.on("connection", async (socket) => {
 
   // ========= RENAME TASK =========
   socket.on("renameTask", async ({ taskId, newTitle }) => {
+    if (!taskId || !newTitle) return;
+
     await updateTask(taskId, { title: newTitle });
 
     io.to(`${socket.orgId}:${socket.board}`).emit(
@@ -168,6 +208,8 @@ io.on("connection", async (socket) => {
 
   // ========= DELETE TASK =========
   socket.on("deleteTask", async ({ taskId }) => {
+    if (!taskId) return;
+
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
     if (error) console.error("Delete error:", error);
 
@@ -187,12 +229,14 @@ setInterval(async () => {
   const now = Date.now();
 
   // 1️⃣ Finish old progress tasks
-  const { data: progressTasks } = await supabase
+  const { data: progressTasks, error: progressErr } = await supabase
     .from("tasks")
     .select("*")
     .eq("status", "progress");
 
-  if (progressTasks && progressTasks.length > 0) {
+  if (progressErr) {
+    console.error("progressTasks error:", progressErr);
+  } else if (progressTasks && progressTasks.length > 0) {
     for (const task of progressTasks) {
       const lastUpdate = new Date(task.updated_at || task.created_at).getTime();
 
@@ -208,14 +252,17 @@ setInterval(async () => {
     }
   } else {
     // 2️⃣ Pick next todo
-    const { data: todo } = await supabase
+    const { data: todo, error: todoErr } = await supabase
       .from("tasks")
       .select("*")
       .eq("status", "todo")
       .limit(1)
       .single();
 
-    if (todo) {
+    if (todoErr && todoErr.code !== "PGRST116") {
+      // ignore "no rows" type errors
+      console.error("todo error:", todoErr);
+    } else if (todo) {
       await updateTask(todo.id, {
         status: "progress",
         updated_at: new Date().toISOString(),
@@ -223,7 +270,7 @@ setInterval(async () => {
     }
   }
 
-  // Broadcast updates to all rooms
+  // Broadcast updates to all connected sockets
   io.sockets.sockets.forEach(async (socket) => {
     socket.emit("updateTasks", await getTasks(socket));
   });

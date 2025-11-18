@@ -21,20 +21,22 @@ export default function OrgBoardPage({ user, profile }) {
 
     const load = async () => {
       // Load organisation details
-      const { data: org } = await supabase
+      const { data: org, error: orgError } = await supabase
         .from("organisations")
         .select("*")
         .eq("id", orgId)
         .maybeSingle();
 
+      if (orgError) console.error("Org load error:", orgError);
       setOrgInfo(org);
 
       // Load members with usernames
-      const { data: mem } = await supabase
+      const { data: mem, error: memError } = await supabase
         .from("organisation_members")
         .select("*, profiles(username)")
         .eq("organisation_id", orgId);
 
+      if (memError) console.error("Members load error:", memError);
       setMembers(mem || []);
     };
 
@@ -59,30 +61,30 @@ export default function OrgBoardPage({ user, profile }) {
     setSocket(s);
 
     s.on("connect", () => {
-      console.log("🟢 Connected:", s.id);
-      s.emit("joinOrg", {
-        org_id: orgId,
-        user_id: user.id,
-      });
+      console.log("🟢 Socket connected:", s.id);
     });
 
     s.on("loadTasks", (taskList) => {
-      console.log("🔥 loadTasks:", taskList);
-      setTasks(taskList);
+      console.log("🔥 [socket] loadTasks:", taskList);
+      setTasks(taskList || []);
     });
 
     s.on("updateTasks", (taskList) => {
-      console.log("🔥 updateTasks:", taskList);
-      setTasks(taskList);
+      console.log("🔥 [socket] updateTasks:", taskList);
+      setTasks(taskList || []);
     });
 
     s.on("boardSwitched", (taskList) => {
-      console.log("📌 Board switched:", taskList);
-      setTasks(taskList);
+      console.log("📌 [socket] boardSwitched:", taskList);
+      setTasks(taskList || []);
+    });
+
+    s.on("disconnect", () => {
+      console.log("🔴 Socket disconnected");
     });
 
     return () => {
-      console.log("🔴 Disconnecting socket...");
+      console.log("🔴 Cleaning up socket...");
       s.disconnect();
     };
   }, [orgId, user]);
@@ -104,7 +106,7 @@ export default function OrgBoardPage({ user, profile }) {
         ← Back to Workspaces
       </button>
 
-      <h1>{orgInfo?.name}</h1>
+      <h1>{orgInfo?.name || "Workspace"}</h1>
       <p>
         Logged in as: <strong>{profile?.username}</strong>
       </p>
