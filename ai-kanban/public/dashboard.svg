@@ -1,0 +1,75 @@
+<svg width="600" height="450" viewBox="0 0 600 450" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background Glow -->
+  <circle cx="300" cy="220" r="260" fill="url(#gradDash)" opacity="0.22"/>
+
+  <!-- TOP LEFT CARD -->
+  <rect x="40" y="60" width="260" height="130" rx="16" fill="#FFFFFF" opacity="0.95"/>
+  
+  <!-- Group Icon -->
+  <circle cx="95" cy="110" r="18" fill="#6EE7FF"/>
+  <circle cx="140" cy="110" r="18" fill="#A78BFA"/>
+  <circle cx="115" cy="140" r="18" fill="#4ADE80"/>
+
+  <!-- Text Bars -->
+  <rect x="180" y="95" width="80" height="14" rx="6" fill="#CBD5E1"/>
+  <rect x="180" y="120" width="100" height="14" rx="6" fill="#CBD5E1"/>
+  <rect x="180" y="145" width="120" height="14" rx="6" fill="#CBD5E1"/>
+
+
+  <!-- TOP RIGHT SUMMARY BLOCK -->
+  <rect x="320" y="60" width="240" height="130" rx="16" fill="#FFFFFF" opacity="0.95"/>
+
+  <!-- Stats circles -->
+  <circle cx="370" cy="110" r="28" fill="#6EE7FF" opacity="0.9"/>
+  <circle cx="460" cy="110" r="28" fill="#A78BFA" opacity="0.9"/>
+  <circle cx="520" cy="110" r="28" fill="#4ADE80" opacity="0.9"/>
+
+  <rect x="350" y="150" width="50" height="12" rx="6" fill="#E5E7EB"/>
+  <rect x="430" y="150" width="60" height="12" rx="6" fill="#E5E7EB"/>
+  <rect x="510" y="150" width="40" height="12" rx="6" fill="#E5E7EB"/>
+
+  <!-- AI SUMMARY CARD -->
+  <rect x="40" y="210" width="520" height="100" rx="16" fill="#FFFFFF"/>
+
+  <!-- Left bullet text -->
+  <rect x="70" y="235" width="150" height="12" rx="6" fill="#CBD5E1"/>
+  <rect x="70" y="260" width="130" height="12" rx="6" fill="#CBD5E1"/>
+  <rect x="70" y="285" width="170" height="12" rx="6" fill="#CBD5E1"/>
+
+  <!-- Right chart -->
+  <rect x="420" y="225" width="100" height="60" rx="10" fill="#F1F5F9"/>
+  <polyline points="430,270 450,250 470,260 495,235" stroke="#A78BFA" stroke-width="3" fill="none"/>
+
+
+  <!-- BOTTOM LEFT PIE CHART CARD -->
+  <rect x="40" y="330" width="240" height="100" rx="16" fill="#FFFFFF"/>
+  
+  <!-- Pie chart -->
+  <circle cx="160" cy="380" r="38" fill="#E5E7EB"/>
+  <path d="M160 380 L160 342 A38 38 0 0 1 198 380 Z" fill="#4FA3FF"/>
+  <path d="M160 380 L198 380 A38 38 0 0 1 160 418 Z" fill="#A78BFA"/>
+  <path d="M160 380 L160 418 A38 38 0 0 1 122 380 Z" fill="#4ADE80"/>
+
+
+  <!-- BOTTOM RIGHT PERFORMANCE CARD -->
+  <rect x="300" y="330" width="260" height="100" rx="16" fill="#FFFFFF"/>
+
+  <!-- 2 Progress Rings -->
+  <circle cx="380" cy="380" r="35" fill="#F1F5F9"/>
+  <circle cx="380" cy="380" r="32" stroke="#4FA3FF" stroke-width="6" fill="none"/>
+
+  <circle cx="480" cy="380" r="35" fill="#F1F5F9"/>
+  <circle cx="480" cy="380" r="32" stroke="#4ADE80" stroke-width="6" fill="none"/>
+
+
+  <!-- Gradient Definition -->
+  <defs>
+    <radialGradient id="gradDash">
+      <stop offset="0%" stop-color="#6EE7FF"/>
+      <stop offset="45%" stop-color="#755BEA"/>
+      <stop offset="100%" stop-color="#4ADE80"/>
+    </radialGradient>
+  </defs>
+
+</svg>

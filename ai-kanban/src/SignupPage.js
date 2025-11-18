@@ -6,19 +6,19 @@ import "./SignupPage.css";
 
 const slides = [
   {
-    img: "https://cdn-icons-png.flaticon.com/512/889/889140.png",
-    title: "Start Your Kanban Journey",
-    desc: "Sign up and begin managing your tasks smarter and faster.",
+    img: "/kanban1.svg",
+    title: "Visualize Your Workflow",
+    desc: "See tasks clearly across every stage.",
   },
   {
-    img: "https://cdn-icons-png.flaticon.com/512/1209/1209234.png",
-    title: "Collaborate Easily",
-    desc: "Invite teammates and organize your projects effortlessly.",
+    img: "/chat.svg",
+    title: "Communicate Effortlessly",
+    desc: "Collaborate with teammates in real time.",
   },
   {
-    img: "https://cdn-icons-png.flaticon.com/512/1041/1041916.png",
-    title: "Track Progress Seamlessly",
-    desc: "Visualize milestones and productivity trends beautifully.",
+    img: "/dashboard.svg",   // ← changed here
+    title: "Dashboard Overview",
+    desc: "Monitor progress and key project metrics.",
   },
 ];
 

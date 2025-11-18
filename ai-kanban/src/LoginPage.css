@@ -207,13 +207,14 @@ html, body, #root { height: 100%; margin: 0; padding: 0; }
   opacity: 1;
   transform: translateY(0) scale(1);
 }
+/* Fix image and text alignment inside slides */
 .slide img {
-  width: 100px;
-  height: 100px;
-  margin-bottom: 12px;
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
-  animation: float 4s ease-in-out infinite;
+  width: 260px;
+  height: 260px;
+  margin-bottom: 20px;
+  object-fit: contain;
 }
+
 @keyframes float {
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-8px); }
@@ -314,11 +315,12 @@ html, body, #root { height: 100%; margin: 0; padding: 0; }
 
 /* Fix image and text alignment inside slides */
 .slide img {
-  width: 110px;
-  height: 110px;
+  width: 260px;
+  height: 260px;
   margin-bottom: 20px;
   object-fit: contain;
 }
+
 
 
 .slide h2 {
@@ -452,3 +454,25 @@ a.btn.btn--outline {
   text-decoration: none !important;
 }
 
+/* Final override to allow big slideshow images */
+.auth-right .slide {
+  max-width: none !important;
+}
+
+.auth-right img {
+  width: 320px !important;
+  height: 320px !important;
+}
+.auth-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  /* REAL MOUNTAIN BACKGROUND */
+  background: url(/mountain.jpg) center/cover no-repeat;
+
+  min-height: 100vh;
+  color: var(--text);
+  overflow: hidden;
+}

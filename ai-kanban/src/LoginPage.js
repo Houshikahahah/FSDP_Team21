@@ -10,19 +10,20 @@ const slides = [
   {
     img: "/kanban1.svg",
     title: "Visualize Your Workflow",
-    desc: "Kanban boards help you see tasks clearly across every stage.",
+    desc: "See tasks clearly across every stage.",
   },
   {
-    img: "/kanban1.svg",
-    title: "Stay Organized",
-    desc: "Columns and cards let you structure work your way.",
+    img: "/chat.svg",
+    title: "Communicate Effortlessly",
+    desc: "Collaborate with teammates in real time.",
   },
   {
-    img: "/kanban1.svg",
-    title: "Track Progress Easily",
-    desc: "See progress move from left to right with clarity.",
+    img: "/dashboard.svg",   // ← changed here
+    title: "Dashboard Overview",
+    desc: "Monitor progress and key project metrics.",
   },
 ];
+
 
 
 function LoginPage() {
