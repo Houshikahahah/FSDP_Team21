@@ -105,7 +105,7 @@ function SignupPage() {
         {/* Left Side: Signup Form */}
         <div className="auth-left">
           <h1 className="brand">Create Account</h1>
-          <p className="subtitle">Join AI Kanban today</p>
+          <p className="subtitle">Join Kiro today</p>
 
 
           <form onSubmit={handleSignup} className="form">
