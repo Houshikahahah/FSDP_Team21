@@ -11,9 +11,36 @@ import "./Sidebar.css";
 export default function Sidebar() {
   const { pathname } = useLocation();
 
+  // ----------------------------------------
+  // 1️⃣ Extract orgId from current URL
+  // ----------------------------------------
+  let orgId = null;
+  const match = pathname.match(/^\/org\/([^/]+)/);
+  if (match) {
+    orgId = match[1];
+    // Save last visited org
+    localStorage.setItem("lastOrgId", orgId);
+  }
+
+  // ----------------------------------------
+  // 2️⃣ Use fallback if you're on Dashboard or WorkItems
+  // ----------------------------------------
+  if (!orgId) {
+    const saved = localStorage.getItem("lastOrgId");
+    if (saved) orgId = saved;
+  }
+
+  // ----------------------------------------
+  // 3️⃣ Build sidebar links
+  // ----------------------------------------
   const links = [
     { to: "/organisations", label: "Organisation", icon: <FiHome /> },
-    { to: "/org/your-org-id-here", label: "Kanban Board", icon: <FiGrid /> },
+
+    {
+      to: orgId ? `/org/${orgId}` : "/organisations",
+      label: "Kanban Board",
+      icon: <FiGrid />,
+    },
 
     { to: "/dashboard", label: "Dashboard", icon: <FiLayout /> },
   ];
@@ -21,7 +48,6 @@ export default function Sidebar() {
   return (
     <div className="sidebar">
       <h3 className="side-title">KIRO</h3>
-
 
       <div className="side-links">
         {links.map((l) => (
@@ -36,7 +62,6 @@ export default function Sidebar() {
         ))}
       </div>
 
-      {/* --- Bottom Section --- */}
       <div className="side-bottom">
         <Link className="side-link" to="/profile">
           <span className="icon"><FiUser /></span>

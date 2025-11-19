@@ -16,79 +16,94 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ---------------------------------------
-  // Load profile safely
-  // ---------------------------------------
+  // ----------------------------------------------------
+  // SAFE PROFILE LOADER
+  // ----------------------------------------------------
   const loadProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
       return;
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", userId)
-      .maybeSingle();
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .maybeSingle();
 
-    if (error) console.error("Profile load error:", error);
-    setProfile(data || null);
+      if (error) console.error("Profile load error:", error);
+
+      setProfile(data || null);
+    } catch (err) {
+      console.error("Profile fetch failed:", err);
+      setProfile(null);
+    }
   };
 
-  // ---------------------------------------
-  // AUTH HANDLING — STABLE VERSION
-  // ---------------------------------------
+  // ----------------------------------------------------
+  // AUTH + TOKEN CORRUPTION AUTO-FIX
+  // ----------------------------------------------------
   useEffect(() => {
-    let isCancelled = false;
+    let stop = false;
 
     const init = async () => {
       try {
         const { data } = await supabase.auth.getSession();
         const session = data?.session || null;
 
-        if (isCancelled) return;
+        if (stop) return;
 
-        const currentUser = session?.user || null;
-        setUser(currentUser);
+        setUser(session?.user || null);
 
-        if (currentUser) {
-          await loadProfile(currentUser.id);
+        if (session?.user) {
+          await loadProfile(session.user.id);
         }
       } catch (err) {
-        console.error("Auth init error:", err);
+        console.error("❌ Supabase session corrupted:", err);
+
+        // 🧨 CORRUPTED TOKEN FIX — DELETE ALL SUPABASE TOKENS
+        Object.keys(localStorage).forEach((k) => {
+          if (k.includes("auth-token")) {
+            console.warn("🔥 Removing broken token:", k);
+            localStorage.removeItem(k);
+          }
+        });
+
+        await supabase.auth.signOut();
+        setUser(null);
+        setProfile(null);
       } finally {
-        if (!isCancelled) setLoading(false); // ❤️ ALWAYS STOP LOADING
+        if (!stop) setLoading(false); // ALWAYS stop loading
       }
     };
 
     init();
 
-    // Realtime auth listener
+    // ----------------------------------------------------
+    // AUTH LISTENER (also safe)
+    // ----------------------------------------------------
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
 
-        if (currentUser) {
-          await loadProfile(currentUser.id);
-        } else {
-          setProfile(null);
-        }
+        if (currentUser) await loadProfile(currentUser.id);
+        else setProfile(null);
 
-        // ❤️ ALSO STOP LOADING HERE
         setLoading(false);
       }
     );
 
     return () => {
-      isCancelled = true;
+      stop = true;
       listener.subscription.unsubscribe();
     };
   }, []);
 
-  // ---------------------------------------
-  // Loading screen
-  // ---------------------------------------
+  // ----------------------------------------------------
+  // LOADING SCREEN
+  // ----------------------------------------------------
   if (loading) {
     return (
       <div style={{ padding: "3rem", fontSize: "24px", textAlign: "center" }}>
@@ -97,26 +112,22 @@ export default function App() {
     );
   }
 
-  // ---------------------------------------
+  // ----------------------------------------------------
   // ROUTES
-  // ---------------------------------------
+  // ----------------------------------------------------
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* LOGIN */}
         <Route
           path="/"
           element={!user ? <LoginPage /> : <Navigate to="/organisations" />}
         />
 
-        {/* SIGNUP */}
         <Route
           path="/signup"
           element={!user ? <SignupPage /> : <Navigate to="/organisations" />}
         />
 
-        {/* ORGANISATION HOME */}
         <Route
           path="/organisations"
           element={
@@ -128,7 +139,6 @@ export default function App() {
           }
         />
 
-        {/* KANBAN BOARD */}
         <Route
           path="/org/:orgId"
           element={
@@ -142,7 +152,6 @@ export default function App() {
           }
         />
 
-        {/* ANALYTICS */}
         <Route
           path="/dashboard"
           element={
@@ -156,7 +165,6 @@ export default function App() {
           }
         />
 
-        {/* LIST VIEW */}
         <Route
           path="/org/:orgId/workitems"
           element={
@@ -169,7 +177,6 @@ export default function App() {
             )
           }
         />
-
       </Routes>
     </BrowserRouter>
   );
