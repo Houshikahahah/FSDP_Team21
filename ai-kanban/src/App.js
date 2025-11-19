@@ -16,7 +16,9 @@ export default function App() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user profile from "profiles" table
+  // ---------------------------------------
+  // Load profile safely
+  // ---------------------------------------
   const loadProfile = async (userId) => {
     if (!userId) {
       setProfile(null);
@@ -30,38 +32,40 @@ export default function App() {
       .maybeSingle();
 
     if (error) console.error("Profile load error:", error);
-
     setProfile(data || null);
   };
 
-  // AUTH SYSTEM — FIXED & STABLE VERSION
+  // ---------------------------------------
+  // AUTH HANDLING — STABLE VERSION
+  // ---------------------------------------
   useEffect(() => {
-    let ignore = false;
+    let isCancelled = false;
 
     const init = async () => {
-      // ❤️ FIX: getSession() never returns null incorrectly
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data?.session || null;
 
-      if (!ignore) {
-        setUser(session?.user || null);
+        if (isCancelled) return;
 
-        if (session?.user) {
-          await loadProfile(session.user.id);
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+
+        if (currentUser) {
+          await loadProfile(currentUser.id);
         }
-
-        setLoading(false);
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        if (!isCancelled) setLoading(false); // ❤️ ALWAYS STOP LOADING
       }
     };
 
     init();
 
-    // Listen for login/logout/refresh events
+    // Realtime auth listener
     const { data: listener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (ignore) return;
-
         const currentUser = session?.user || null;
         setUser(currentUser);
 
@@ -70,24 +74,32 @@ export default function App() {
         } else {
           setProfile(null);
         }
+
+        // ❤️ ALSO STOP LOADING HERE
+        setLoading(false);
       }
     );
 
     return () => {
-      ignore = true;
+      isCancelled = true;
       listener.subscription.unsubscribe();
     };
   }, []);
 
-  // Loading UI (simple, non-blocking)
+  // ---------------------------------------
+  // Loading screen
+  // ---------------------------------------
   if (loading) {
     return (
-      <div style={{ padding: "2rem", fontSize: "20px" }}>
-        Initializing...
+      <div style={{ padding: "3rem", fontSize: "24px", textAlign: "center" }}>
+        Initializing…
       </div>
     );
   }
 
+  // ---------------------------------------
+  // ROUTES
+  // ---------------------------------------
   return (
     <BrowserRouter>
       <Routes>
@@ -104,7 +116,7 @@ export default function App() {
           element={!user ? <SignupPage /> : <Navigate to="/organisations" />}
         />
 
-        {/* HOME ORG PAGE (no sidebar) */}
+        {/* ORGANISATION HOME */}
         <Route
           path="/organisations"
           element={
@@ -116,7 +128,7 @@ export default function App() {
           }
         />
 
-        {/* KANBAN BOARD (with sidebar) */}
+        {/* KANBAN BOARD */}
         <Route
           path="/org/:orgId"
           element={
@@ -130,7 +142,7 @@ export default function App() {
           }
         />
 
-        {/* ANALYTICS DASHBOARD (with sidebar) */}
+        {/* ANALYTICS */}
         <Route
           path="/dashboard"
           element={
@@ -149,7 +161,9 @@ export default function App() {
           path="/org/:orgId/workitems"
           element={
             user ? (
-              <WorkItems user={user} profile={profile} />
+              <Layout>
+                <WorkItems user={user} profile={profile} />
+              </Layout>
             ) : (
               <Navigate to="/" />
             )
