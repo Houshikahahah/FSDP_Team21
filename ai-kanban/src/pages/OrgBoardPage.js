@@ -1,54 +1,46 @@
+
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { io } from "socket.io-client";
 import KanbanBoard from "../KanbanBoard";
+import WorkItems from "../WorkItems";
+
+import Sidebar from "../Sidebar"; 
 import { supabase } from "../supabaseClient";
 
 export default function OrgBoardPage({ user, profile }) {
   const { orgId } = useParams();
-  const navigate = useNavigate();
 
   const [socket, setSocket] = useState(null);
   const [tasks, setTasks] = useState([]);
-  const [members, setMembers] = useState([]);
   const [orgInfo, setOrgInfo] = useState(null);
 
+  // SAFE DISPLAY NAME
   const displayName = profile?.username || "User";
-
-  /* -------------------------------------------------------
-      LOAD ORG + MEMBERS (SAFE)
-  ------------------------------------------------------- */
+  // LOAD ORG + MEMBERS
   useEffect(() => {
-    if (!user) return;
-    if (!orgId || orgId === "undefined") return;
+    if (!orgId || !user) return;
 
     const load = async () => {
-      try {
-        const { data: org } = await supabase
-          .from("organisations")
-          .select("*")
-          .eq("id", orgId)
-          .maybeSingle();
+      const { data: org } = await supabase
+        .from("organisations")
+        .select("*")
+        .eq("id", orgId)
+        .maybeSingle();
 
-        setOrgInfo(org);
+      setOrgInfo(org);
 
-        const { data: mem } = await supabase
-          .from("organisation_members")
-          .select("*, profiles(username)")
-          .eq("organisation_id", orgId);
+      const { data: mem } = await supabase
+        .from("organisation_members")
+        .select("*, profiles(username)")
+        .eq("organisation_id", orgId);
 
-        setMembers(mem || []);
-      } catch (err) {
-        console.error("Load error:", err);
-      }
+      setMembers(mem || []);
     };
-
     load();
-  }, [user, orgId]);
+  }, [orgId, user]);
 
-  /* -------------------------------------------------------
-      SOCKET CONNECTION (FULLY FIXED)
-  ------------------------------------------------------- */
+  // SOCKET
   useEffect(() => {
     if (!user) return;
     if (!orgId || orgId === "undefined") return;   // 🛑 prevents broken socket
@@ -66,28 +58,9 @@ export default function OrgBoardPage({ user, profile }) {
 
     setSocket(s);
 
-    s.on("connect", () => {
-      console.log("🟢 Socket connected:", s.id);
-    });
-
-    /* 🛡️ PROTECTED TASK HANDLERS — NEVER WIPE BOARD */
-    s.on("loadTasks", (taskList) => {
-      if (!Array.isArray(taskList)) return;       // prevent wiping
-      console.log("📥 loadTasks:", taskList);
-      setTasks(taskList);
-    });
-
-    s.on("updateTasks", (taskList) => {
-      if (!Array.isArray(taskList)) return;       // prevent wiping
-      console.log("🔄 updateTasks:", taskList);
-      setTasks(taskList);
-    });
-
-    s.on("boardSwitched", (taskList) => {
-      if (!Array.isArray(taskList)) return;       // prevent wiping
-      console.log("📌 boardSwitched:", taskList);
-      setTasks(taskList);
-    });
+    s.on("loadTasks", (taskList) => setTasks(taskList || []));
+    s.on("updateTasks", (taskList) => setTasks(taskList || []));
+    s.on("boardSwitched", (taskList) => setTasks(taskList || []));
 
     s.on("disconnect", () => {
       console.log("🔴 Socket disconnected");
@@ -105,18 +78,39 @@ export default function OrgBoardPage({ user, profile }) {
   return (
     <div className="org-layout">
 
-      {/* HIDDEN HEADER (optional)
+      {/* <button
+        style={{
+          padding: "6px 12px",
+          borderRadius: "6px",
+          marginBottom: "1rem",
+          cursor: "pointer",
+        }}
+        onClick={() => navigate("/organisations")}
+      >
+        ← Back to Workspaces
+      </button> */}
+{/* 
       <h1>{orgInfo?.name || "Workspace"}</h1>
-      <p>Logged in as: <strong>{displayName}</strong></p>
-      */ }
+      <p>
+        Logged in as: <strong>{displayName}</strong>
+      </p>
+      <div style={{ margin: "1rem 0" }}>
+        <h3>Members</h3>
+        <ul>
+          {members
+            .sort((a, b) => (a.role === "owner" ? -1 : 1))
+            .map((m) => (
+              <li key={m.user_id}>
+                {m.profiles?.username || "Unknown"} — {m.role}
+              </li>
+            ))}
+        </ul>
+      </div>
+
+      <hr /> */}
 
       {socket ? (
-        <KanbanBoard
-          socket={socket}
-          tasks={tasks}
-          user={user}
-          orgId={orgId}
-        />
+        <KanbanBoard socket={socket} tasks={tasks} user={user} />
       ) : (
         <p>Connecting to board...</p>
       )}
