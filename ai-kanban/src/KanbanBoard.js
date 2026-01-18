@@ -1,5 +1,5 @@
 import "./KanbanBoard.css";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
@@ -89,6 +89,8 @@ function KanbanBoard({ socket, user, profile }) {
           type,
           priority,
           estimation,
+          start_date,
+          end_date,
           status,
           user_id,
           assigned_to,
@@ -100,7 +102,8 @@ function KanbanBoard({ socket, user, profile }) {
           profiles:user_id (username)
         `
         )
-        .eq("user_id", user.id)
+        // ✅ IMPORTANT: include tasks you own OR tasks assigned to you
+        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
         .order("created_at", { ascending: false });
 
       if (error) console.error("Kanban fetchTasks error:", error);
@@ -109,11 +112,13 @@ function KanbanBoard({ socket, user, profile }) {
 
     fetchTasks();
 
+    // ✅ IMPORTANT: do NOT filter realtime only by user_id
+    // Otherwise assigned tasks won't trigger realtime updates.
     const channel = supabase
-      .channel(`kanban_tasks_personal_${user.id}`)
+      .channel(`kanban_tasks_${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "tasks", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "tasks" },
         fetchTasks
       )
       .subscribe();
@@ -121,10 +126,12 @@ function KanbanBoard({ socket, user, profile }) {
     return () => supabase.removeChannel(channel);
   }, [user]);
 
-  // show tasks assigned to you OR unassigned
+  // ✅ Only show tasks that are mine (owner) OR assigned to me
   const myTasks = useMemo(() => {
     if (!user) return [];
-    return tasks.filter((t) => t.assigned_to === user.id || t.assigned_to == null);
+    return tasks.filter(
+      (t) => t.user_id === user.id || t.assigned_to === user.id
+    );
   }, [tasks, user]);
 
   // Build columns
@@ -160,18 +167,29 @@ function KanbanBoard({ socket, user, profile }) {
     });
     setColumns(nextCols);
 
+    // ✅ IMPORTANT: allow update if owner OR assignee
     const { error } = await supabase
       .from("tasks")
-      .update({ status: destination.droppableId, updated_at: new Date().toISOString() })
+      .update({
+        status: destination.droppableId,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", moved.id)
-      .eq("user_id", user.id);
+      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
 
     if (error) console.error("Kanban move update error:", error);
   };
 
   const deleteTask = async (taskId) => {
     if (!window.confirm("Delete task?")) return;
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId).eq("user_id", user.id);
+
+    // ✅ allow delete if owner OR assignee (if you want ONLY owner can delete, tell me)
+    const { error } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("id", taskId)
+      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
+
     if (error) console.error("Kanban delete error:", error);
   };
 
@@ -179,10 +197,7 @@ function KanbanBoard({ socket, user, profile }) {
   const openPromptPopup = (task) => {
     setSelectedBacklogTask(task);
     setAiPrompt("");
-
-    // if models loaded and nothing selected yet, default to first
     setSelectedModel((prev) => prev || models[0] || "");
-
     setShowPromptPopup(true);
   };
 
@@ -214,18 +229,17 @@ function KanbanBoard({ socket, user, profile }) {
     setSelectedBacklogTask(null);
     setAiPrompt("");
 
-    // optimistic: move instantly to progress + queued
+    // ✅ allow update if owner OR assignee
     const { error } = await supabase
       .from("tasks")
       .update({
         status: "progress",
         ai_status: "queued",
-        // optional: show selected model immediately on UI
         ai_agent: modelToUse,
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
-      .eq("user_id", user.id);
+      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
 
     if (error) {
       console.error("Optimistic progress update error:", error);
@@ -233,7 +247,11 @@ function KanbanBoard({ socket, user, profile }) {
     }
 
     // enqueue on server with model
-    socket.emit("generateFromWorkItem", { taskId, prompt: cleanPrompt, model: modelToUse });
+    socket.emit("generateFromWorkItem", {
+      taskId,
+      prompt: cleanPrompt,
+      model: modelToUse,
+    });
   };
 
   // DONE: open popup
@@ -243,6 +261,7 @@ function KanbanBoard({ socket, user, profile }) {
   const resetDoneToTodo = async (taskId) => {
     if (!user) return;
 
+    // ✅ allow reset if owner OR assignee
     const { error } = await supabase
       .from("tasks")
       .update({
@@ -253,7 +272,7 @@ function KanbanBoard({ socket, user, profile }) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
-      .eq("user_id", user.id);
+      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
 
     if (error) console.error("Reset to todo error:", error);
     setSelectedDoneTask(null);
@@ -327,10 +346,13 @@ function KanbanBoard({ socket, user, profile }) {
                                 ✕
                               </button>
 
-                              <div className="task-title">{task.title}</div>
+                              <div className="task-title" title={task.title}>
+                                {task.title}
+                              </div>
+
 
                               <div className="task-created-by">
-                                Created by: {task.profiles?.username || profile?.username || "Unknown"}
+                                Assigned by: {task.profiles?.username || profile?.username || "Unknown"}
                               </div>
 
                               {task.status === "todo" && (

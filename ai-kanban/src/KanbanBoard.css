@@ -109,12 +109,13 @@ body {
 .task-card {
   background: white;
   padding: 14px;
+  padding-right: 46px;          /* ✅ reserve space for the X */
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   cursor: grab;
   transition: 0.15s;
-  position: relative;
+  position: relative;           /* ✅ needed for absolute X */
 }
 
 .task-card:hover {
@@ -125,6 +126,7 @@ body {
   position: absolute;
   top: 8px;
   right: 10px;
+  z-index: 2;                   /* ✅ ensure it's above text */
   background: none;
   border: none;
   font-size: 18px;
@@ -132,16 +134,23 @@ body {
   color: #999;
 }
 
+
 .task-menu:hover {
   color: #333;
 }
 
 .task-title {
-  margin: 4px 0 6px 0;
-  font-size: 16px;
   font-weight: 600;
-  color: #222;
+  font-size: 14px;
+  color: #111827;
+
+  /* ✅ clean ellipsis */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
+
 
 .task-created-by {
   font-size: 12px;

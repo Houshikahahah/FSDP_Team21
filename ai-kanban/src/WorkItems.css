@@ -349,9 +349,10 @@
   overflow-x: auto;
 }
 
+/* ✅ UPDATED GRID: Dates wider + columns aligned */
 .task-header {
   display: grid;
-  grid-template-columns: 40px 1.6fr 2fr 1fr 1fr 1fr 1.2fr 60px;
+  grid-template-columns: 40px 1.6fr 2fr 1.4fr 1fr 1fr 1fr 60px;
   gap: 12px;
   padding: 10px 20px;
   background: #fafafa;
@@ -364,7 +365,7 @@
 
 .task-row {
   display: grid;
-  grid-template-columns: 40px 1.6fr 2fr 1fr 1fr 1fr 1.2fr 60px;
+  grid-template-columns: 40px 1.6fr 2fr 1.4fr 1fr 1fr 1fr 60px;
   gap: 12px;
   padding: 14px 20px;
   border-top: 1px solid #f3f4f6;
@@ -376,21 +377,37 @@
   background: #fafafa;
 }
 
+/* ✅ CRITICAL: allow grid items to shrink so ellipsis works */
+.task-row > div,
+.task-header > div {
+  min-width: 0;
+}
+
 .col-task {
   font-weight: 500;
   color: #111827;
   font-size: 14px;
 }
 
+/* ✅ Description: stop and show ... (no horizontal stretching) */
 .col-description {
   color: #6b7280;
   font-size: 13px;
   line-height: 1.4;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .col-estimation {
   color: #6b7280;
   font-size: 13px;
+
+  white-space: nowrap;
+  overflow: hidden;          /* ✅ prevents spilling */
+  text-overflow: ellipsis;   /* ✅ shows ... */
+  min-width: 0;              /* ✅ important in grid */
 }
 
 .type-badge {
@@ -407,11 +424,19 @@
   display: flex;
   align-items: center;
 }
+.col-type {
+  min-width: 0;
+}
+
+.type-badge {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ===========================
    NEW: Boxed Select (People + Priority)
-   - Priority now looks like "Assign to" select
-   - Disabled = cannot be changed
 =========================== */
 .boxed-select {
   padding: 6px 10px;
@@ -426,14 +451,12 @@
   min-width: 110px;
 }
 
-/* show disabled state clearly */
 .boxed-select:disabled {
   opacity: 0.85;
   cursor: not-allowed;
   background: #ffffff;
 }
 
-/* keep priority colors INSIDE a boxed select */
 .boxed-select.priority-high {
   background: #fee2e2;
   color: #dc2626;
@@ -452,7 +475,7 @@
   border-color: #bfdbfe;
 }
 
-/* (legacy) priority badge remains, in case other parts use it */
+/* priority badge */
 .priority-badge {
   display: inline-block;
   padding: 5px 11px;
@@ -566,6 +589,13 @@
   border-color: #667eea;
 }
 
+/* ✅ Create Task modal textarea: fixed box, vertical scroll only */
+.modal-content .form-group textarea {
+  resize: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .form-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -576,7 +606,7 @@
 @media (max-width: 1200px) {
   .task-header,
   .task-row {
-    grid-template-columns: 40px 1.6fr 1.8fr 1fr 1fr 1fr 1.2fr 60px;
+    grid-template-columns: 40px 1.6fr 1.8fr 1.4fr 1fr 1fr 1fr 60px;
   }
 }
 
@@ -603,7 +633,7 @@
 
   .task-header,
   .task-row {
-    grid-template-columns: 40px 1.6fr 1.8fr 1fr 1fr 1.2fr 60px;
+    grid-template-columns: 40px 1.6fr 1.4fr 1fr 1fr 1fr 60px;
   }
 
   .col-description {
@@ -643,9 +673,17 @@
   }
 
   .col-task {
-    padding-left: 28px;
-    font-size: 15px;
-  }
+  font-weight: 500;
+  color: #111827;
+  font-size: 14px;
+
+  /* ✅ stop long titles breaking layout */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 
   .col-actions {
     display: flex;
@@ -694,6 +732,11 @@
 }
 .col-arrow:hover {
   color: #111827;
+}
+
+/* header arrow spacer should not look clickable */
+.task-header .col-arrow {
+  cursor: default;
 }
 
 .delete-dash {
@@ -788,4 +831,53 @@
 .type-generic {
   background: #e5e7eb;
   color: #374151;
+}
+
+.readonly-box {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 6px 10px;
+  background: #fff;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+}
+/* FORCE clamp for the first 2 text columns inside a task row */
+.task-row .col-task,
+.task-row .col-description {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  min-width: 0 !important;
+}
+
+/* Ensure grid children can shrink */
+.task-row > div,
+.task-header > div {
+  min-width: 0 !important;
+}
+/* ✅ Task Details modal: NEVER allow horizontal scrolling */
+.task-modal {
+  overflow-x: hidden;      /* kill side scroll */
+}
+
+/* Long title line should wrap instead of extending sideways */
+.task-modal p {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Description box should wrap too (and never create side scroll) */
+.task-description-box {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* AI output should never force horizontal scroll */
+.ai-output-box {
+  overflow-x: hidden;
+  white-space: pre-wrap;   /* wrap long lines */
+  word-break: break-word;
 }

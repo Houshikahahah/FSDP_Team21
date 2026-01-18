@@ -94,7 +94,8 @@ export default function WorkItems({ user, profile }) {
     type: "",
     priority: "Medium",
     assigned_to: null,
-    estimation: "",
+    start_date: "",
+    end_date: "",
   });
 
   // ===== AUTH GUARD =====
@@ -104,7 +105,6 @@ export default function WorkItems({ user, profile }) {
 
   // =========================================================
   // ✅ LIVE TASKS VIA SOCKET (PERSONAL + ORG)
-  // ✅ FIXED: this MUST be useEffect, not (() => {})
   // =========================================================
   useEffect(() => {
     if (!user) return;
@@ -113,6 +113,10 @@ export default function WorkItems({ user, profile }) {
 
     const s = io("http://localhost:5000", {
       transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 500,
+      timeout: 5000,
       query: isOrgMode ? { userId: user.id, orgId } : { userId: user.id },
     });
 
@@ -120,6 +124,7 @@ export default function WorkItems({ user, profile }) {
       if (Array.isArray(list)) setTasks(list);
       setLoading(false);
     };
+
     const onUpdatePersonal = (list) => {
       if (Array.isArray(list)) setTasks(list);
     };
@@ -128,6 +133,7 @@ export default function WorkItems({ user, profile }) {
       if (Array.isArray(list)) setTasks(list);
       setLoading(false);
     };
+
     const onUpdateOrg = (list) => {
       if (Array.isArray(list)) setTasks(list);
     };
@@ -153,7 +159,6 @@ export default function WorkItems({ user, profile }) {
 
   // =========================================================
   // ✅ KEEP MODAL IN SYNC WITH LIVE TASK UPDATES
-  // (So selectedTask doesn't go stale when tasks update)
   // =========================================================
   useEffect(() => {
     if (!selectedTask) return;
@@ -215,30 +220,46 @@ export default function WorkItems({ user, profile }) {
   const getPriorityClass = (p) =>
     p ? `priority-${p.toLowerCase()}` : "priority-medium";
 
+  const formatDateRange = (start, end) => {
+    const s = start || "";
+    const e = end || "";
+    if (!s && !e) return "-";
+    if (s && e) return `${s} → ${e}`;
+    return s ? `${s} → ?` : `? → ${e}`;
+  };
+
   // ===== ACTIONS =====
   const handleDeleteTask = async (taskId) => {
     if (!window.confirm("Delete this task?")) return;
 
     const prev = tasks;
-
-    // ✅ Optimistic UI
     setTasks((cur) => cur.filter((t) => t.id !== taskId));
 
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
     if (error) {
       console.error("delete error:", error);
-      setTasks(prev); // rollback
+      setTasks(prev);
     }
   };
-
-  // ✅ FIXED: removed stray `useEffect` line here
 
   const handleCreateTask = async () => {
     if (!newTask.title.trim()) return;
     const status = taskLocation.split(":")[1];
 
+    const safePriority = newTask.priority || "Medium";
+    const start_date = newTask.start_date ? newTask.start_date : null;
+    const end_date = newTask.end_date ? newTask.end_date : null;
+
+    if (start_date && end_date && end_date < start_date) {
+      alert("End Date cannot be earlier than Start Date.");
+      return;
+    }
+
     const payload = {
       ...newTask,
+      priority: safePriority,
+      start_date,
+      end_date,
       status,
       user_id: user.id,
     };
@@ -247,7 +268,6 @@ export default function WorkItems({ user, profile }) {
       payload.organisation_id = orgId;
       payload.is_main_board = true;
 
-      // ✅ must assign in org mode
       if (!payload.assigned_to) {
         alert(
           "Please assign this task to someone so it appears on their Kanban board."
@@ -270,53 +290,11 @@ export default function WorkItems({ user, profile }) {
       type: "",
       priority: "Medium",
       assigned_to: null,
-      estimation: "",
+      start_date: "",
+      end_date: "",
     });
   };
 
-  const handleAssignChange = async (taskId, assignedTo) => {
-    const prev = tasks;
-
-    // ✅ Optimistic UI
-    setTasks((cur) =>
-      cur.map((t) =>
-        t.id === taskId ? { ...t, assigned_to: assignedTo || null } : t
-      )
-    );
-
-    const { error } = await supabase
-      .from("tasks")
-      .update({ assigned_to: assignedTo || null })
-      .eq("id", taskId);
-
-    if (error) {
-      console.error("assign update error:", error);
-      setTasks(prev); // rollback
-    }
-  };
-
-  // ✅ priority change handler (persist + rollback)
-  const handlePriorityChange = async (taskId, priority) => {
-    const prev = tasks;
-
-    // ✅ Optimistic UI
-    setTasks((cur) =>
-      cur.map((t) => (t.id === taskId ? { ...t, priority } : t))
-    );
-
-    const { error } = await supabase
-      .from("tasks")
-      .update({ priority })
-      .eq("id", taskId);
-
-    if (error) {
-      console.error("priority update error:", error);
-      setTasks(prev); // rollback
-    }
-    // Realtime propagation is handled by your backend bridge (Supabase changes -> Socket rooms)
-  };
-
-  // ===== RENDER =====
   if (loading) return <div className="loading">Loading...</div>;
 
   return (
@@ -328,7 +306,9 @@ export default function WorkItems({ user, profile }) {
             {profile?.username?.charAt(0).toUpperCase() || "P"}
           </div>
           <div>
-            <h1>{isOrgMode ? "Organisation Work Items" : "Personal Work Items"}</h1>
+            <h1>
+              {isOrgMode ? "Organisation Work Items" : "Personal Work Items"}
+            </h1>
             <p>
               Logged in as: <strong>{profile?.username}</strong>
             </p>
@@ -363,7 +343,9 @@ export default function WorkItems({ user, profile }) {
       {/* NAV */}
       <div className="workitems-nav">
         <div style={{ color: "#666", fontSize: 13 }}>
-          {isOrgMode ? "Shared org backlog (all members)" : "Personal tasks + assigned tasks"}
+          {isOrgMode
+            ? "Shared org backlog (all members)"
+            : "Personal tasks + assigned tasks"}
         </div>
 
         <div className="nav-actions">
@@ -429,9 +411,10 @@ export default function WorkItems({ user, profile }) {
                 ) : (
                   <>
                     <div className="task-header">
+                      <div className="col-arrow"></div>
                       <div className="col-task">Task</div>
                       <div className="col-description">Description</div>
-                      <div className="col-estimation">Estimation</div>
+                      <div className="col-estimation">Dates</div>
                       <div className="col-type">Type</div>
                       <div className="col-people">People</div>
                       <div className="col-priority">Priority</div>
@@ -457,12 +440,19 @@ export default function WorkItems({ user, profile }) {
                             →
                           </div>
 
-                          <div className="col-task">{item.title}</div>
-                          <div className="col-description">
+                          <div className="col-task" title={item.title || ""}>
+                            {item.title}
+                          </div>
+
+                          <div
+                            className="col-description"
+                            title={item.description || ""}
+                          >
                             {item.description || "-"}
                           </div>
+
                           <div className="col-estimation">
-                            {item.estimation || "-"}
+                            {formatDateRange(item.start_date, item.end_date)}
                           </div>
 
                           <div className="col-type">
@@ -478,56 +468,21 @@ export default function WorkItems({ user, profile }) {
                           </div>
 
                           <div className="col-people">
-                            {isOrgMode ? (
-                              <select
-                                value={item.assigned_to ?? ""}
-                                onChange={(e) =>
-                                  handleAssignChange(item.id, e.target.value || null)
-                                }
-                                style={{
-                                  padding: "6px 10px",
-                                  borderRadius: 10,
-                                  border: "1px solid #ddd",
-                                  fontSize: 13,
-                                  background: "#fff",
-                                }}
-                              >
-                                <option value="" disabled hidden>
-                                  Unassigned
-                                </option>
-                                {assignedProfiles.map((p) => (
-                                  <option value={p.id} key={p.id}>
-                                    {p.username}
-                                  </option>
-                                ))}
-                              </select>
-                            ) : assignedProfile ? (
-                              <ProfileAvatar profile={assignedProfile} />
-                            ) : (
-                              <span style={{ color: "#999", fontSize: 12 }}>
-                                Unassigned
-                              </span>
-                            )}
+                            <div className="readonly-box">
+                              {assignedProfile
+                                ? assignedProfile.username
+                                : "Unassigned"}
+                            </div>
                           </div>
 
-                          {/* ✅ PRIORITY EDITABLE */}
                           <div className="col-priority">
-                            <select
-                              value={item.priority || "Medium"}
-                              onChange={(e) =>
-                                handlePriorityChange(item.id, e.target.value)
-                              }
-                              className={`priority-badge ${getPriorityClass(item.priority)}`}
-                              style={{
-                                border: "none",
-                                cursor: "pointer",
-                                backgroundColor: "transparent",
-                              }}
+                            <div
+                              className={`priority-badge ${getPriorityClass(
+                                item.priority
+                              )} readonly-box`}
                             >
-                              <option value="Low">Low</option>
-                              <option value="Medium">Medium</option>
-                              <option value="High">High</option>
-                            </select>
+                              {item.priority || "Medium"}
+                            </div>
                           </div>
 
                           <div className="col-actions">
@@ -552,11 +507,15 @@ export default function WorkItems({ user, profile }) {
 
       {/* MODAL — TASK DETAILS */}
       {selectedTask && (
-        <div className="task-modal-overlay" onClick={() => setSelectedTask(null)}>
+        <div
+          className="task-modal-overlay"
+          onClick={() => setSelectedTask(null)}
+        >
           <div className="task-modal" onClick={(e) => e.stopPropagation()}>
             <h2>Task Details</h2>
 
-            <p>
+            {/* ✅ WRAPS LONG TITLES (prevents side scroll) */}
+            <p style={{ overflowWrap: "anywhere", wordBreak: "break-word" }}>
               <strong>Title:</strong> {selectedTask.title}
             </p>
 
@@ -568,6 +527,11 @@ export default function WorkItems({ user, profile }) {
                 ? selectedTask.description
                 : "None"}
             </div>
+
+            <p style={{ marginTop: 12 }}>
+              <strong>Dates:</strong>{" "}
+              {formatDateRange(selectedTask.start_date, selectedTask.end_date)}
+            </p>
 
             <p style={{ marginTop: 12 }}>
               <strong>AI Agent:</strong> {selectedTask.ai_agent || "None"}
@@ -608,7 +572,10 @@ export default function WorkItems({ user, profile }) {
 
       {/* MODAL — CREATE TASK */}
       {showNewTaskModal && (
-        <div className="modal-overlay" onClick={() => setShowNewTaskModal(false)}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowNewTaskModal(false)}
+        >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Create New Task</h2>
@@ -645,15 +612,29 @@ export default function WorkItems({ user, profile }) {
                 />
               </div>
 
-              <div className="form-group">
-                <label>Estimation</label>
-                <input
-                  value={newTask.estimation}
-                  onChange={(e) =>
-                    setNewTask({ ...newTask, estimation: e.target.value })
-                  }
-                  placeholder="Enter estimation"
-                />
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Start Date</label>
+                  <input
+                    type="date"
+                    value={newTask.start_date}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, start_date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>End Date</label>
+                  <input
+                    type="date"
+                    value={newTask.end_date}
+                    min={newTask.start_date || undefined}
+                    onChange={(e) =>
+                      setNewTask({ ...newTask, end_date: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               <div className="form-group">
