@@ -8,7 +8,7 @@ import Layout from "./Layout";
 import Dashboard from "./Dashboard";
 import WorkItems from "./WorkItems";
 import OrgBoardPage from "./pages/OrgBoardPage";
-
+import TimelineView from "./TimelineView";
 // ✅ org page
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 
@@ -143,6 +143,19 @@ export default function App() {
             )
           }
         />
+
+        <Route
+    path="/timeline"
+  element={
+    user ? (
+      <Layout>
+        <TimelineView user={user} profile={profile} />
+      </Layout>
+    ) : (
+      <Navigate to="/" />
+    )
+  }
+/>
 
         {/* CATCH-ALL */}
         <Route path="*" element={<Navigate to={user ? "/kanban" : "/"} />} />

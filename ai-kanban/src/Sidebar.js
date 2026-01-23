@@ -1,5 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { FiHome, FiGrid, FiLayout, FiUser, FiSettings } from "react-icons/fi";
+import {
+  FiHome,
+  FiGrid,
+  FiLayout,
+  FiUser,
+  FiSettings,
+  FiCalendar,
+} from "react-icons/fi";
 import "./Sidebar.css";
 
 export default function Sidebar() {
@@ -9,7 +16,13 @@ export default function Sidebar() {
     { to: "/organisations", label: "Organisation", icon: <FiHome /> },
     { to: "/kanban", label: "Kanban Board", icon: <FiGrid /> },
     { to: "/dashboard", label: "Dashboard", icon: <FiLayout /> },
+
+    // ✅ NEW: Personal Timeline
+    { to: "/timeline", label: "Timeline", icon: <FiCalendar /> },
   ];
+
+  const isActive = (path) =>
+    pathname === path || pathname.startsWith(path + "/");
 
   return (
     <div className="sidebar">
@@ -20,9 +33,7 @@ export default function Sidebar() {
           <Link
             key={l.to}
             to={l.to}
-            className={`side-link ${
-              pathname === l.to ? "active" : ""
-            }`}
+            className={`side-link ${isActive(l.to) ? "active" : ""}`}
           >
             <span className="icon">{l.icon}</span>
             {l.label}
@@ -31,13 +42,23 @@ export default function Sidebar() {
       </div>
 
       <div className="side-bottom">
-        <Link className="side-link" to="/profile">
-          <span className="icon"><FiUser /></span>
+        <Link
+          className={`side-link ${isActive("/profile") ? "active" : ""}`}
+          to="/profile"
+        >
+          <span className="icon">
+            <FiUser />
+          </span>
           Profile
         </Link>
 
-        <Link className="side-link" to="/settings">
-          <span className="icon"><FiSettings /></span>
+        <Link
+          className={`side-link ${isActive("/settings") ? "active" : ""}`}
+          to="/settings"
+        >
+          <span className="icon">
+            <FiSettings />
+          </span>
           Settings
         </Link>
       </div>
