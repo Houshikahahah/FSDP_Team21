@@ -1,51 +1,24 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./LoginPage.css";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
-// ================================
-// ✅ Updated Kanban-focused slides
-// ================================
 const slides = [
-  {
-    img: "/kanban1.svg",
-    title: "Visualize Your Workflow",
-    desc: "See tasks clearly across every stage.",
-  },
-  {
-    img: "/chat.svg",
-    title: "Communicate Effortlessly",
-    desc: "Collaborate with teammates in real time.",
-  },
-  {
-    img: "/dashboard.svg",   // ← changed here
-    title: "Dashboard Overview",
-    desc: "Monitor progress and key project metrics.",
-  },
+  { img: "/kanban1.svg", title: "Plan with Clarity", desc: "To Do → In Progress → Done, at a glance." },
+  { img: "/chat.svg", title: "AI Assist", desc: "Generate subtasks, summaries, and next steps instantly." },
+  { img: "/dashboard.svg", title: "Track Progress", desc: "Stay on top of your work with a clean dashboard view." },
 ];
 
-
-
-function LoginPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(
-    (localStorage.getItem("theme") || "dark") === "dark"
-  );
   const [slideIndex, setSlideIndex] = useState(0);
 
-  // Theme handling
-  useEffect(() => {
-    const theme = darkMode ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [darkMode]);
-
-  // Auto slideshow
   useEffect(() => {
     const interval = setInterval(
       () => setSlideIndex((prev) => (prev + 1) % slides.length),
@@ -54,7 +27,6 @@ function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // Login Logic
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -66,10 +38,7 @@ function LoginPage() {
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
@@ -81,31 +50,27 @@ function LoginPage() {
   };
 
   return (
-    <div className="auth-wrapper">
-      <div className="bg-orb orb-1"></div>
-      <div className="bg-orb orb-2"></div>
+    <div className="login-page">
+      {/* ✅ This layer FORCE overrides any global dark background */}
+      <div className="login-bg" aria-hidden="true"></div>
 
-      {/* Theme Toggle */}
-      <button
-        className="theme-toggle"
-        onClick={() => setDarkMode((v) => !v)}
-        aria-label="Toggle theme"
-      >
-        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-      </button>
+      <div className="login-card">
+        {/* LEFT */}
+        <div className="login-left">
+          <div className="login-brand">
+            <span className="login-logo">KIRO</span>
+            <span className="login-badge">AI Kanban</span>
+          </div>
 
-      <div className="auth-card hover-float">
-        {/* Left: Login */}
-        <div className="auth-left">
-          <h1 className="brand">Kiro</h1>
-          <p className="subtitle">Sign in to your workspace</p>
+          <h1 className="login-title">Welcome back</h1>
+          <p className="login-subtitle">Sign in to your workspace</p>
 
-          <form onSubmit={handleSubmit} className="form">
-            <label className="label">
+          <form onSubmit={handleSubmit} className="login-form">
+            <label className="login-label">
               <span>Email</span>
               <input
                 type="email"
-                className="input"
+                className="login-input"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -113,12 +78,12 @@ function LoginPage() {
               />
             </label>
 
-            <label className="label">
+            <label className="login-label">
               <span>Password</span>
-              <div className="password">
+              <div className="login-password">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="input"
+                  className="login-input"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -126,7 +91,7 @@ function LoginPage() {
                 />
                 <button
                   type="button"
-                  className="password__toggle"
+                  className="login-toggle"
                   onClick={() => setShowPassword((v) => !v)}
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -134,42 +99,47 @@ function LoginPage() {
               </div>
             </label>
 
-            {error && <div className="error">{error}</div>}
+            {error && <div className="login-error">{error}</div>}
 
-            <button type="submit" className="btn btn--primary" disabled={loading}>
+            <button className="login-primary" type="submit" disabled={loading}>
               {loading ? "Logging in..." : "Log In"}
             </button>
 
-            <div className="divider">or</div>
+            <div className="login-divider">
+              <span />
+              <p>or</p>
+              <span />
+            </div>
 
-            <Link to="/signup" className="btn btn--outline">
+            <Link to="/signup" className="login-outline">
               Create Account
             </Link>
+
+            <p className="login-footnote">
+              Tip: Use AI to auto-split big tasks into smaller ones.
+            </p>
           </form>
         </div>
 
-        {/* Right: Slideshow */}
-        <div className="auth-right">
-          {slides.map((slide, i) => (
-            <div key={i} className={`slide ${i === slideIndex ? "active" : ""}`}>
-              <img src={slide.img} alt={slide.title} />
-              <h2>{slide.title}</h2>
-              <p>{slide.desc}</p>
-            </div>
-          ))}
-
-          <div className="dots">
-            {slides.map((_, i) => (
-              <span
-                key={i}
-                className={`dot ${i === slideIndex ? "active" : ""}`}
-              ></span>
+        {/* RIGHT */}
+        <div className="login-right">
+          <div className="right-inner">
+            {slides.map((s, i) => (
+              <div key={i} className={`right-slide ${i === slideIndex ? "active" : ""}`}>
+                <img src={s.img} alt={s.title} />
+                <h2>{s.title}</h2>
+                <p>{s.desc}</p>
+              </div>
             ))}
+
+            <div className="right-dots">
+              {slides.map((_, i) => (
+                <span key={i} className={`right-dot ${i === slideIndex ? "active" : ""}`} />
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-export default LoginPage;

@@ -1,87 +1,62 @@
-import React, { useState, useEffect } from "react";
+// SignupPage.js
+import React, { useEffect, useState } from "react";
+import "./SignupPage.css";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
-import "./SignupPage.css";
-
 
 const slides = [
   {
     img: "/kanban1.svg",
-    title: "Visualize Your Workflow",
-    desc: "See tasks clearly across every stage.",
+    title: "Plan with Clarity",
+    desc: "To Do → In Progress → Done, at a glance.",
   },
   {
     img: "/chat.svg",
-    title: "Communicate Effortlessly",
-    desc: "Collaborate with teammates in real time.",
+    title: "AI Assist",
+    desc: "Generate subtasks, summaries, and next steps instantly.",
   },
   {
-    img: "/dashboard.svg",   // ← changed here
-    title: "Dashboard Overview",
-    desc: "Monitor progress and key project metrics.",
+    img: "/dashboard.svg",
+    title: "Track Progress",
+    desc: "Stay on top of your work with a clean dashboard view.",
   },
 ];
 
-
-function SignupPage() {
+export default function SignupPage() {
   const navigate = useNavigate();
-
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [darkMode, setDarkMode] = useState(
-    (localStorage.getItem("theme") || "dark") === "dark"
-  );
   const [slideIndex, setSlideIndex] = useState(0);
 
-
   useEffect(() => {
-    const theme = darkMode ? "dark" : "light";
-    document.documentElement.setAttribute("data-theme", theme);
-    localStorage.setItem("theme", theme);
-  }, [darkMode]);
-
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSlideIndex((prev) => (prev + 1) % slides.length);
-    }, 4000);
+    const interval = setInterval(
+      () => setSlideIndex((prev) => (prev + 1) % slides.length),
+      4500
+    );
     return () => clearInterval(interval);
   }, []);
 
-
-  // ------------------ HANDLE SIGNUP ------------------
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError("");
-
 
     if (!email.trim() || !password.trim()) {
       setError("Please fill in both fields.");
       return;
     }
 
-
+    setError("");
     setLoading(true);
 
-
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-
+      const { error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
 
-
       alert("Account created! Please verify your email before logging in.");
-
-
-      navigate("/"); // Redirect to login page
+      navigate("/"); // back to login page
     } catch (err) {
       setError(err.message || "Signup failed.");
     } finally {
@@ -89,31 +64,28 @@ function SignupPage() {
     }
   };
 
-
   return (
-    <div className="auth-wrapper">
-      <button
-        className="theme-toggle"
-        onClick={() => setDarkMode((v) => !v)}
-        aria-label="Toggle theme"
-      >
-        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-      </button>
+    <div className="login-page">
+      {/* ✅ same background layer as login */}
+      <div className="login-bg" aria-hidden="true"></div>
 
+      <div className="login-card">
+        {/* LEFT */}
+        <div className="login-left">
+          <div className="login-brand">
+            <span className="login-logo">KIRO</span>
+            <span className="login-badge">AI Kanban</span>
+          </div>
 
-      <div className="auth-card">
-        {/* Left Side: Signup Form */}
-        <div className="auth-left">
-          <h1 className="brand">Create Account</h1>
-          <p className="subtitle">Join Kiro today</p>
+          <h1 className="login-title">Create account</h1>
+          <p className="login-subtitle">Start your workspace in seconds</p>
 
-
-          <form onSubmit={handleSignup} className="form">
-            <label className="label">
+          <form onSubmit={handleSignup} className="login-form">
+            <label className="login-label">
               <span>Email</span>
               <input
                 type="email"
-                className="input"
+                className="login-input"
                 placeholder="you@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -121,13 +93,12 @@ function SignupPage() {
               />
             </label>
 
-
-            <label className="label">
+            <label className="login-label">
               <span>Password</span>
-              <div className="password">
+              <div className="login-password">
                 <input
                   type={showPassword ? "text" : "password"}
-                  className="input"
+                  className="login-input"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -135,7 +106,7 @@ function SignupPage() {
                 />
                 <button
                   type="button"
-                  className="password__toggle"
+                  className="login-toggle"
                   onClick={() => setShowPassword((v) => !v)}
                 >
                   {showPassword ? "Hide" : "Show"}
@@ -143,47 +114,53 @@ function SignupPage() {
               </div>
             </label>
 
+            {error && <div className="login-error">{error}</div>}
 
-            {error && <div className="error">{error}</div>}
-
-
-            <button type="submit" className="btn btn--primary" disabled={loading}>
+            <button className="login-primary" type="submit" disabled={loading}>
               {loading ? "Creating..." : "Sign Up"}
             </button>
 
+            <div className="login-divider">
+              <span />
+              <p>or</p>
+              <span />
+            </div>
 
-            <div className="divider">Already have an account?</div>
-
-
-            <Link to="/" className="btn btn--outline">
+            <Link to="/" className="login-outline">
               Back to Login
             </Link>
+
+            <p className="login-footnote">
+              Tip: Use AI to auto-split big tasks into smaller ones.
+            </p>
           </form>
         </div>
 
-
-        {/* Right Side: Slideshow */}
-        <div className="auth-right">
-          {slides.map((slide, i) => (
-            <div key={i} className={`slide ${i === slideIndex ? "active" : ""}`}>
-              <img src={slide.img} alt={slide.title} />
-              <h2>{slide.title}</h2>
-              <p>{slide.desc}</p>
-            </div>
-          ))}
-          <div className="dots">
-            {slides.map((_, i) => (
-              <span key={i} className={`dot ${i === slideIndex ? "active" : ""}`}></span>
+        {/* RIGHT */}
+        <div className="login-right">
+          <div className="right-inner">
+            {slides.map((s, i) => (
+              <div
+                key={i}
+                className={`right-slide ${i === slideIndex ? "active" : ""}`}
+              >
+                <img src={s.img} alt={s.title} />
+                <h2>{s.title}</h2>
+                <p>{s.desc}</p>
+              </div>
             ))}
+
+            <div className="right-dots">
+              {slides.map((_, i) => (
+                <span
+                  key={i}
+                  className={`right-dot ${i === slideIndex ? "active" : ""}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-
-export default SignupPage;
-
-
-
