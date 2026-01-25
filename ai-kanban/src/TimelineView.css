@@ -1,0 +1,264 @@
+/* TimelineView.css */
+
+.timeline-page {
+  padding: 24px 40px;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* LOCKED TOP HEADER */
+.timeline-header {
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  background: #ffffff;
+  padding-bottom: 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #eef2f7;
+}
+
+.timeline-header h1 {
+  margin: 0;
+  font-size: 38px;
+}
+
+.timeline-sub {
+  color: #6b7280;
+  margin-top: 6px;
+  font-size: 15px;
+}
+
+.timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeline-controls button {
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+}
+
+.timeline-month {
+  font-weight: 800;
+  font-size: 18px;
+  padding: 0 6px;
+}
+
+.timeline-filter {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.timeline-filter:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Fill remaining space */
+.jira-timeline {
+  flex: 1;
+  min-height: 0;
+  background: transparent;
+}
+
+/* ONE scroll container */
+.timeline-scroll {
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: auto;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  position: relative;
+}
+
+/* Sticky date header (inside scroll container) */
+.timeline-header-row {
+  position: sticky;
+  top: 0;
+  z-index: 120;
+  background: #fff;
+  border-bottom: 1px solid #eef2f7;
+  box-shadow: 0 8px 20px rgba(17, 24, 39, 0.06);
+}
+
+.jira-days {
+  display: flex;
+  padding: 12px 12px 14px;
+}
+
+/* day cells */
+.day-cell {
+  border-right: 1px solid #f1f5f9;
+  padding: 8px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+}
+
+.day-cell:last-child {
+  border-right: none;
+}
+
+.day-top {
+  font-size: 12px;
+  color: #6b7280;
+  height: 16px;
+}
+
+.day-num {
+  font-size: 14px;
+  font-weight: 900;
+  color: #111827;
+  padding: 6px 12px;
+  border-radius: 12px;
+}
+
+.day-cell.today .day-num {
+  background: rgba(99, 102, 241, 0.18);
+  color: #4338ca;
+}
+
+.day-cell.month-start {
+  background: rgba(17, 24, 39, 0.03);
+}
+
+/* grid wrapper */
+.timeline-grid-wrap {
+  padding: 12px;
+}
+
+/* main grid */
+.timeline-grid {
+  position: relative;
+  display: flex;
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  min-height: 520px;
+  border: 1px solid #eef2f7;
+}
+
+/* columns */
+.grid-col {
+  border-right: 1px solid #f1f5f9;
+  height: 100%;
+}
+
+.grid-col.month-start {
+  background: rgba(17, 24, 39, 0.03);
+}
+
+.grid-col:last-child {
+  border-right: none;
+}
+
+/* today line */
+.today-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #2563eb;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* row separators */
+.row-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.row-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(17, 24, 39, 0.06);
+}
+
+/* bars */
+.bars-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.jira-bar {
+  position: absolute;
+  border-radius: 12px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.08);
+}
+
+.bar-text {
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Priority colors */
+.jira-bar.prio-high { background: #fee2e2; color: #991b1b; }
+.jira-bar.prio-medium { background: #fef3c7; color: #92400e; }
+.jira-bar.prio-low { background: #dbeafe; color: #1e40af; }
+
+/* empty state */
+.timeline-empty {
+  position: absolute;
+  top: 140px;
+  left: 20px;
+  right: 20px;
+  color: #6b7280;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* modal */
+.task-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+.task-modal {
+  background: #fff;
+  padding: 24px;
+  border-radius: 16px;
+  width: min(560px, 92vw);
+}
+
+.btn-primary {
+  margin-top: 14px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+}
