@@ -1,6 +1,7 @@
 // src/App.js
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { io } from "socket.io-client";
 
 import LoginPage from "./LoginPage";
 import SignupPage from "./SignupPage";
@@ -8,17 +9,12 @@ import SignupPage from "./SignupPage";
 import Layout from "./Layout";
 import Dashboard from "./Dashboard";
 import WorkItems from "./WorkItems";
-import OrgBoardPage from "./pages/OrgBoardPage";
 import ProfilePage from "./pages/ProfilePage";
+import KanbanBoard from "./KanbanBoard";
 
-// ✅ already here
 import { LocaleProvider } from "./LocaleContext";
-
-// ✅ ADD: reset password page import
 import ResetPasswordPage from "./pages/ResetPasswordPage";
-
 import TimelineView from "./TimelineView";
-// ✅ org page
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 
 import { supabase } from "./supabaseClient";
@@ -26,6 +22,7 @@ import { supabase } from "./supabaseClient";
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   const loadProfile = async (userId) => {
     if (!userId) return setProfile(null);
@@ -40,6 +37,7 @@ export default function App() {
     setProfile(data || null);
   };
 
+  // ✅ AUTH FIRST
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const u = session?.user || null;
@@ -60,7 +58,33 @@ export default function App() {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // ✅ ADD: Auto-refresh profile when the profiles row changes (locale/timezone/etc)
+  // ✅ SOCKET AFTER USER EXISTS
+  useEffect(() => {
+    if (!user?.id) {
+      setSocket((prev) => {
+        if (prev) prev.disconnect();
+        return null;
+      });
+      return;
+    }
+
+    const s = io("http://localhost:5000", {
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 500,
+      timeout: 8000,
+      query: { userId: user.id },
+    });
+
+    setSocket(s);
+
+    return () => {
+      s.disconnect();
+    };
+  }, [user?.id]);
+
+  // ✅ Auto-refresh profile
   useEffect(() => {
     if (!user?.id) return;
 
@@ -69,36 +93,30 @@ export default function App() {
       .on(
         "postgres_changes",
         {
-          event: "*", // INSERT/UPDATE/DELETE
+          event: "*",
           schema: "public",
           table: "profiles",
           filter: `id=eq.${user.id}`,
         },
-        () => {
-          // When DB updates profile, refresh state so UI updates too
-          loadProfile(user.id);
-        }
+        () => loadProfile(user.id)
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id]); // re-subscribe only when user changes
+  }, [user?.id]);
 
-  // ✅ helper: read active org (persist org mode)
   const activeOrgId = window.localStorage.getItem("activeOrgId");
 
   return (
     <BrowserRouter>
-      {/* ✅ ADD ONLY: Provider wrapper (uses profile to set locale/timezone) */}
       <LocaleProvider profile={profile}>
         <Routes>
           {/* LOGIN */}
-          <Route
-            path="/"
-            element={!user ? <LoginPage /> : <Navigate to="/kanban" />}
-          />
+          <Route path="/" element={!user ? <LoginPage /> : <Navigate to="/home" />} />
+<Route path="/signup" element={!user ? <SignupPage /> : <Navigate to="/home" />} />
+
 
           {/* SIGNUP */}
           <Route
@@ -106,10 +124,27 @@ export default function App() {
             element={!user ? <SignupPage /> : <Navigate to="/kanban" />}
           />
 
-          {/* ✅ ADD: Reset password page (Supabase redirect comes here) */}
+          {/* Reset password */}
           <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-          {/* ORGANISATIONS PAGE */}
+          {/* HOME (org-aware) */}
+          <Route
+            path="/home"
+            element={
+              user ? (
+                activeOrgId ? (
+                  <Navigate to={`/org/${activeOrgId}/kanban`} />
+                ) : (
+                  <Navigate to="/kanban" />
+                )
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+
+
+          {/* Organisations */}
           <Route
             path="/organisations"
             element={
@@ -121,6 +156,7 @@ export default function App() {
             }
           />
 
+          {/* Profile */}
           <Route
             path="/profile"
             element={
@@ -136,13 +172,13 @@ export default function App() {
             }
           />
 
-          {/* PERSONAL KANBAN (HOME) */}
+          {/* PERSONAL KANBAN */}
           <Route
             path="/kanban"
             element={
               user ? (
                 <Layout>
-                  <OrgBoardPage user={user} profile={profile} />
+                  <KanbanBoard socket={socket} user={user} profile={profile} />
                 </Layout>
               ) : (
                 <Navigate to="/" />
@@ -150,7 +186,21 @@ export default function App() {
             }
           />
 
-          {/* ORG WORKITEMS (SHARED BACKLOG) */}
+          {/* ORG KANBAN */}
+          <Route
+            path="/org/:id/kanban"
+            element={
+              user ? (
+                <Layout>
+                  <KanbanBoard socket={socket} user={user} profile={profile} />
+                </Layout>
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+
+          {/* ORG WORKITEMS */}
           <Route
             path="/org/:id/workitems"
             element={
@@ -164,7 +214,7 @@ export default function App() {
             }
           />
 
-          {/* PERSONAL DASHBOARD */}
+          {/* DASHBOARD */}
           <Route
             path="/dashboard"
             element={
@@ -178,25 +228,21 @@ export default function App() {
             }
           />
 
-          {/* ✅ WORKITEMS (STICKY ORG MODE) */}
-          <Route
+            <Route
             path="/workitems"
             element={
               user ? (
-                activeOrgId ? (
-                  <Navigate to={`/org/${activeOrgId}/workitems`} />
-                ) : (
-                  <Layout>
-                    <WorkItems user={user} profile={profile} />
-                  </Layout>
-                )
+                <Layout>
+                  <WorkItems user={user} profile={profile} />
+                </Layout>
               ) : (
                 <Navigate to="/" />
               )
             }
           />
 
-          {/* ✅ TIMELINE */}
+
+          {/* TIMELINE */}
           <Route
             path="/timeline"
             element={
@@ -211,7 +257,7 @@ export default function App() {
           />
 
           {/* CATCH-ALL */}
-          <Route path="*" element={<Navigate to={user ? "/kanban" : "/"} />} />
+          <Route path="*" element={<Navigate to={user ? "/home" : "/"} />} />
         </Routes>
       </LocaleProvider>
     </BrowserRouter>

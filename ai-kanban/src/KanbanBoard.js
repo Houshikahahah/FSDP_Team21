@@ -1,20 +1,25 @@
 import "./KanbanBoard.css";
 import React, { useState, useEffect, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
-/**
- * EXPECTS:
- * <KanbanBoard socket={socket} user={user} profile={profile} />
- * socket should be connected with query: { userId: user.id }
- *
- * Server must expose:
- * GET http://localhost:5000/api/models -> { models: string[], defaultModel: string }
- */
+
 function KanbanBoard({ socket, user, profile }) {
   const navigate = useNavigate();
 
+  const { id: orgId } = useParams();
+  const uid = user?.id;
+  const isOrgMode = !!orgId;
+
+    // ✅ remember current org so /home and sidebar can route correctly
+  useEffect(() => {
+    if (isOrgMode && orgId) {
+      localStorage.setItem("activeOrgId", orgId);
+    }
+  }, [isOrgMode, orgId]);
+
+  
   const [tasks, setTasks] = useState([]);
   const [columns, setColumns] = useState({ todo: [], progress: [], done: [] });
 
@@ -75,64 +80,72 @@ function KanbanBoard({ socket, user, profile }) {
   }, [socket]);
 
   // ----------- LOAD TASKS + REALTIME -----------
-  useEffect(() => {
-    if (!user) return;
+useEffect(() => {
+  if (!uid) return;
 
-    const fetchTasks = async () => {
-      const { data, error } = await supabase
-        .from("tasks")
-        .select(
-          `
-          id,
-          title,
-          description,
-          type,
-          priority,
-          estimation,
-          start_date,
-          end_date,
-          status,
-          user_id,
-          assigned_to,
-          created_at,
-          updated_at,
-          ai_output,
-          ai_agent,
-          ai_status,
-          profiles:user_id (username)
-        `
-        )
-        // ✅ IMPORTANT: include tasks you own OR tasks assigned to you
-        .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`)
-        .order("created_at", { ascending: false });
+  const fetchTasks = async () => {
+    let q = supabase
+      .from("tasks")
+      .select(`
+        id,
+        title,
+        description,
+        type,
+        priority,
+        estimation,
+        start_date,
+        end_date,
+        status,
+        user_id,
+        assigned_to,
+        organisation_id,
+        is_main_board,
+        created_at,
+        updated_at,
+        ai_output,
+        ai_agent,
+        ai_status,
+        profiles:user_id (username)
+      `)
+      .order("created_at", { ascending: false });
 
-      if (error) console.error("Kanban fetchTasks error:", error);
-      setTasks(Array.isArray(data) ? data : []);
-    };
+    if (isOrgMode) {
+      // ✅ personal tasks (mine) + org tasks assigned to me (ONLY this org)
+      q = q.or(
+        `and(organisation_id.is.null,user_id.eq.${uid}),and(organisation_id.eq.${orgId},assigned_to.eq.${uid})`
+      );
+    } else {
+      // ✅ personal page only: ONLY my personal tasks
+      q = q
+        .is("organisation_id", null)
+        .eq("user_id", uid);
+    }
 
-    fetchTasks();
+    const { data, error } = await q;
+    if (error) console.error("Kanban fetchTasks error:", error);
+    setTasks(Array.isArray(data) ? data : []);
+  };
 
-    // ✅ IMPORTANT: do NOT filter realtime only by user_id
-    // Otherwise assigned tasks won't trigger realtime updates.
-    const channel = supabase
-      .channel(`kanban_tasks_${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tasks" },
-        fetchTasks
-      )
-      .subscribe();
+  fetchTasks();
 
-    return () => supabase.removeChannel(channel);
-  }, [user]);
+  const channel = supabase
+    .channel(`kanban_tasks_${uid}_${isOrgMode ? orgId : "personal"}`)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "tasks" },
+      fetchTasks
+    )
+    .subscribe();
 
-  // ✅ Only show tasks that are mine (owner) OR assigned to me
-  const myTasks = useMemo(() => {
-    if (!user) return [];
-    return tasks.filter(
-      (t) => t.user_id === user.id || t.assigned_to === user.id
-    );
-  }, [tasks, user]);
+  return () => supabase.removeChannel(channel);
+}, [uid, isOrgMode, orgId]);
+
+
+// ✅ ADD THIS RIGHT HERE
+const myTasks = useMemo(() => {
+  if (!uid) return [];
+  return tasks.filter((t) => t.user_id === uid || t.assigned_to === uid);
+}, [tasks, uid]);  
 
   // Build columns
   useEffect(() => {
@@ -175,7 +188,8 @@ function KanbanBoard({ socket, user, profile }) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", moved.id)
-      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
+      .or(`user_id.eq.${uid},assigned_to.eq.${uid}`);
+
 
     if (error) console.error("Kanban move update error:", error);
   };
@@ -188,7 +202,8 @@ function KanbanBoard({ socket, user, profile }) {
       .from("tasks")
       .delete()
       .eq("id", taskId)
-      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
+      .or(`user_id.eq.${uid},assigned_to.eq.${uid}`);
+
 
     if (error) console.error("Kanban delete error:", error);
   };
@@ -239,7 +254,8 @@ function KanbanBoard({ socket, user, profile }) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
-      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
+      .or(`user_id.eq.${uid},assigned_to.eq.${uid}`);
+
 
     if (error) {
       console.error("Optimistic progress update error:", error);
@@ -272,7 +288,8 @@ function KanbanBoard({ socket, user, profile }) {
         updated_at: new Date().toISOString(),
       })
       .eq("id", taskId)
-      .or(`user_id.eq.${user.id},assigned_to.eq.${user.id}`);
+      .or(`user_id.eq.${uid},assigned_to.eq.${uid}`);
+
 
     if (error) console.error("Reset to todo error:", error);
     setSelectedDoneTask(null);
@@ -291,12 +308,14 @@ function KanbanBoard({ socket, user, profile }) {
         {/* Header */}
         <div className="header" style={{ display: "flex", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-            <div className="welcome">Personal Board</div>
+          <div className="welcome">
+          {isOrgMode ? "Organisation Board" : "Personal Board"}
+          </div>
           </div>
 
           <div style={{ marginLeft: "auto", display: "flex", gap: "16px" }}>
             <span style={{ cursor: "pointer", fontWeight: 600 }}>Kanban Board</span>
-            <span style={{ cursor: "pointer", color: "#666" }} onClick={() => navigate("/workitems")}>
+            <span style={{ cursor: "pointer", color: "#666" }} onClick={() => navigate(isOrgMode ? `/org/${orgId}/workitems` : "/workitems")}>
               WorkItems
             </span>
           </div>
