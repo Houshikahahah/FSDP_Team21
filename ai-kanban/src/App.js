@@ -9,7 +9,6 @@ import Layout from "./Layout";
 import Dashboard from "./Dashboard";
 import WorkItems from "./WorkItems";
 import OrgBoardPage from "./pages/OrgBoardPage";
-<<<<<<< HEAD
 import ProfilePage from "./pages/ProfilePage";
 
 // ✅ already here
@@ -18,9 +17,7 @@ import { LocaleProvider } from "./LocaleContext";
 // ✅ ADD: reset password page import
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 
-=======
 import TimelineView from "./TimelineView";
->>>>>>> ac99fcc7b7a2980b05b8a4113e96623f5851ed97
 // ✅ org page
 import OrganisationDashboard from "./pages/OrganisationDashboard";
 
@@ -167,7 +164,6 @@ export default function App() {
             }
           />
 
-<<<<<<< HEAD
           {/* PERSONAL DASHBOARD */}
           <Route
             path="/dashboard"
@@ -200,28 +196,24 @@ export default function App() {
             }
           />
 
+          {/* ✅ TIMELINE */}
+          <Route
+            path="/timeline"
+            element={
+              user ? (
+                <Layout>
+                  <TimelineView user={user} profile={profile} />
+                </Layout>
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+
           {/* CATCH-ALL */}
           <Route path="*" element={<Navigate to={user ? "/kanban" : "/"} />} />
         </Routes>
       </LocaleProvider>
-=======
-        <Route
-    path="/timeline"
-  element={
-    user ? (
-      <Layout>
-        <TimelineView user={user} profile={profile} />
-      </Layout>
-    ) : (
-      <Navigate to="/" />
-    )
-  }
-/>
-
-        {/* CATCH-ALL */}
-        <Route path="*" element={<Navigate to={user ? "/kanban" : "/"} />} />
-      </Routes>
->>>>>>> ac99fcc7b7a2980b05b8a4113e96623f5851ed97
     </BrowserRouter>
   );
 }
