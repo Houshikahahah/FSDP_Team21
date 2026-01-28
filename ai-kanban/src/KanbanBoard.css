@@ -1589,3 +1589,651 @@ body {
 .empty-column-img{
   filter: grayscale(10%);
 }
+/* =========================
+   PROMPT AI POPUP — UI REFRESH (CSS ONLY)
+   Paste at VERY BOTTOM of KanbanBoard.css
+========================= */
+
+/* overlay stays the same vibe but a bit cleaner */
+.popup-overlay{
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* main card */
+.popup-card.large{
+  width: min(840px, 92vw) !important;
+  max-height: 78vh !important;
+  padding: 26px 28px !important;
+  border-radius: 14px !important;     /* less rounded, more pro */
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22) !important;
+}
+
+/* close button: subtle, not shouty */
+.popup-close{
+  top: 16px !important;
+  right: 16px !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  color: #475569 !important;
+  display: grid;
+  place-items: center;
+}
+.popup-close:hover{
+  background: rgba(15, 23, 42, 0.03);
+  color: #0f172a !important;
+}
+
+/* "Prompt AI" centered like you want */
+.popup-card.large > h3{
+  margin: 0 0 18px 0 !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.2px;
+}
+
+/* ===== Task info block (title + desc) =====
+   Works with your current markup:
+   h3 then title div then optional desc div
+*/
+.popup-card.large > h3 + div{
+  margin-top: 0 !important;
+  font-weight: 650 !important;
+  font-size: 16px !important;
+  color: #0f172a !important;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* description (only if it exists — otherwise this will just be "tight" and harmless) */
+.popup-card.large > h3 + div + div{
+  margin-top: 10px !important;
+  font-size: 13px !important;
+  color: #64748b !important;
+  line-height: 1.45;
+  padding: 0 2px;
+}
+
+/* labels */
+.popup-card.large label{
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: #0f172a !important;
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+  display: block;
+}
+
+/* ===== Ref-like input/select styling (glowy border, soft depth) ===== */
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100% !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(90deg, rgba(99,102,241,0.55), rgba(168,85,247,0.55)) border-box !important;
+
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12) !important;
+  outline: none !important;
+}
+
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18),
+              0 14px 34px rgba(99, 102, 241, 0.14) !important;
+}
+
+.popup-card.large textarea{
+  min-height: 160px;
+  resize: vertical;
+}
+
+/* bottom actions alignment */
+.popup-actions{
+  margin-top: 20px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+/* cancel keeps neutral */
+.cancel-btn{
+  background: rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  padding: 10px 18px !important;
+  font-weight: 650 !important;
+}
+.cancel-btn:hover{
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ===== Generate button like your ref (purple gradient + white sparkles) ===== */
+.add-btn{
+  position: relative;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 11px 18px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  cursor: pointer;
+
+  background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 45%, #8b5cf6 100%) !important;
+  box-shadow: 0 16px 34px rgba(124, 58, 237, 0.28) !important;
+}
+
+.add-btn::after{
+  content: " ✦";
+  color: rgba(255,255,255,0.95);
+  margin-left: 6px;
+  font-size: 14px;
+}
+
+.add-btn::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 45%),
+              radial-gradient(circle at 70% 40%, rgba(255,255,255,0.18), transparent 48%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.add-btn:hover{ filter: brightness(1.02); }
+.add-btn:active{ transform: translateY(1px); }
+
+.add-btn:disabled{
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+/* =========================
+   PROMPT AI POPUP — REFINED (DARKER PURPLE + CLEANER LAYOUT + AI BG)
+   Paste at VERY BOTTOM of KanbanBoard.css
+========================= */
+
+/* overlay */
+.popup-overlay{
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(9px) !important;
+}
+
+/* card */
+.popup-card.large{
+  position: relative;
+  width: min(860px, 92vw) !important;
+  max-height: 78vh !important;
+  padding: 26px 30px 22px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22) !important;
+  overflow: hidden;
+}
+
+/* subtle AI flowing background */
+.popup-card.large::before{
+  content: "";
+  position: absolute;
+  inset: -120px;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(520px 320px at 20% 18%, rgba(88, 28, 135, 0.20), transparent 60%),
+    radial-gradient(520px 320px at 85% 30%, rgba(67, 56, 202, 0.16), transparent 62%),
+    radial-gradient(620px 380px at 55% 92%, rgba(124, 58, 237, 0.12), transparent 62%),
+    conic-gradient(from 220deg at 55% 40%,
+      rgba(124,58,237,0.10),
+      rgba(99,102,241,0.08),
+      rgba(168,85,247,0.08),
+      rgba(124,58,237,0.10)
+    );
+  filter: blur(16px);
+}
+
+/* keep content above bg */
+.popup-card.large > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* centered title */
+.popup-card.large > h3{
+  margin: 0 0 16px 0 !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 700 !important; /* less heavy */
+  color: #0f172a !important;
+  letter-spacing: -0.2px;
+}
+
+/* X button: smaller, no container */
+.popup-close{
+  top: 14px !important;
+  right: 14px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #64748b !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+.popup-close:hover{
+  color: #0f172a !important;
+  background: transparent !important;
+}
+
+/* ===== Task info: grouped nicely so it doesn't blend into inputs =====
+   your structure:
+   h3
+   (title div)
+   (desc div optional)
+*/
+.popup-card.large > h3 + div{
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.70) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  font-weight: 650 !important;
+  font-size: 16px !important;
+  color: #0f172a !important;
+}
+
+/* desc under title but still inside same "task area" feel */
+.popup-card.large > h3 + div + div{
+  margin: 10px 2px 18px 2px !important;
+  padding-left: 2px !important;
+  font-size: 13px !important;
+  color: #64748b !important;
+  line-height: 1.45 !important;
+}
+
+/* add spacing before first label so it feels separated */
+.popup-card.large label:first-of-type{
+  margin-top: 10px !important;
+}
+
+/* labels: not too bold */
+.popup-card.large label{
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: #0f172a !important;
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+/* inputs: darker purple + inner padding away from borders */
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100% !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+
+  /* darker + prettier */
+  border: 1px solid rgba(88, 28, 135, 0.42) !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(90deg, rgba(88,28,135,0.72), rgba(124,58,237,0.62), rgba(67,56,202,0.62)) border-box !important;
+
+  box-shadow: 0 12px 30px rgba(88, 28, 135, 0.10) !important;
+  outline: none !important;
+
+  /* keeps them visually away from card edge */
+  margin: 0 auto !important;
+}
+
+/* focus ring: darker purple */
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  box-shadow: 0 0 0 4px rgba(88, 28, 135, 0.16),
+              0 16px 40px rgba(88, 28, 135, 0.12) !important;
+}
+
+.popup-card.large textarea{
+  min-height: 170px !important;
+  resize: vertical;
+}
+
+/* dropdown arrow nice color */
+.popup-card.large select{
+  color: #0f172a !important;
+}
+
+/* buttons row */
+.popup-actions{
+  margin-top: 18px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+/* cancel: lighter weight */
+.cancel-btn{
+  background: rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.10) !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  padding: 10px 18px !important;
+  font-weight: 600 !important; /* less bold */
+}
+.cancel-btn:hover{
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* generate: darker + sparkles, less bold text */
+.add-btn{
+  position: relative;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 11px 18px !important;
+  font-weight: 650 !important; /* less bold */
+  color: rgba(255,255,255,0.96) !important;
+  cursor: pointer;
+
+  background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 45%, #5b21b6 100%) !important;
+  box-shadow: 0 18px 36px rgba(76, 29, 149, 0.24) !important;
+}
+
+.add-btn::after{
+  content: " ✦";
+  color: rgba(255,255,255,0.92);
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.add-btn::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 46%),
+    radial-gradient(circle at 72% 45%, rgba(255,255,255,0.14), transparent 50%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.add-btn:hover{ filter: brightness(1.02); }
+.add-btn:active{ transform: translateY(1px); }
+
+.add-btn:disabled{
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+/* ===== Prompt AI: Softer white + animated purple flow ===== */
+
+.popup-card.large::before{
+  content: "";
+  position: absolute;
+  inset: -160px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(520px 360px at 20% 18%, rgba(124, 58, 237, 0.14), transparent 60%),
+    radial-gradient(520px 360px at 85% 28%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(600px 420px at 55% 88%, rgba(168, 85, 247, 0.10), transparent 65%),
+    radial-gradient(420px 320px at 45% 45%, rgba(255,255,255,0.65), transparent 70%);
+
+  filter: blur(22px);
+  opacity: 0.6;
+
+  animation: ai-flow 18s ease-in-out infinite alternate;
+}
+
+/* subtle floating movement */
+@keyframes ai-flow {
+  0% {
+    transform: translate(-10px, -6px) scale(1);
+  }
+  50% {
+    transform: translate(18px, 12px) scale(1.03);
+  }
+  100% {
+    transform: translate(-6px, 16px) scale(1.02);
+  }
+}
+/* =========================
+   Prompt AI polish pass
+========================= */
+
+/* 1) kill the bright white “blinding” middle */
+.popup-card.large::before{
+  /* remove the strong white spot + soften overall */
+  background:
+    radial-gradient(520px 360px at 20% 18%, rgba(124, 58, 237, 0.14), transparent 60%),
+    radial-gradient(520px 360px at 85% 28%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(600px 420px at 55% 88%, rgba(168, 85, 247, 0.10), transparent 65%),
+    /* softer neutral glow instead of white hotspot */
+    radial-gradient(520px 360px at 50% 45%, rgba(15, 23, 42, 0.035), transparent 70%);
+  opacity: 0.55;
+}
+
+/* also slightly tint the base so it’s not pure white */
+.popup-card.large{
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92)) !important;
+}
+
+/* 2) remove the arrow (dropdown caret) */
+.popup-card.large select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 18px; /* no caret space needed */
+}
+
+/* 3) move dropdown away from the container edge */
+.popup-card.large{
+  padding: 26px 34px !important; /* more breathing room inside modal */
+}
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100%;
+  margin-left: 6px;              /* small inset so it doesn't hug edge */
+  margin-right: 6px;
+}
+
+/* 4) make everything smoother (less harsh corners, softer shadows) */
+.popup-card.large{
+  border-radius: 18px !important;
+  box-shadow: 0 26px 80px rgba(2, 6, 23, 0.22) !important;
+}
+
+.popup-card.large input,
+.popup-card.large select,
+.popup-card.large textarea{
+  border-radius: 16px !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.popup-card.large input:focus,
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  outline: none !important;
+  border-color: rgba(124, 58, 237, 0.55) !important;
+  box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* 5) darken generate button + keep sparkles */
+.add-btn{
+  background: linear-gradient(90deg, #3b0764 0%, #5b21b6 45%, #4c1d95 100%) !important;
+  box-shadow:
+    0 18px 42px rgba(76, 29, 149, 0.40),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+  font-weight: 600 !important;
+}
+
+.add-btn:hover{
+  filter: brightness(1.04);
+  box-shadow:
+    0 22px 50px rgba(76, 29, 149, 0.46),
+    inset 0 1px 0 rgba(255,255,255,0.26) !important;
+}
+/* ===== Custom select caret (AI Model) ===== */
+
+.popup-card.large select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* room for caret */
+  padding-right: 46px !important;
+
+  /* subtle gradient like the rest */
+  background:
+    linear-gradient(180deg, #ffffff, #fafaff) padding-box,
+    linear-gradient(180deg, rgba(124,58,237,0.55), rgba(124,58,237,0.35)) border-box;
+}
+
+/* caret wrapper */
+.popup-card.large select{
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236b21a8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 16px 16px;
+}
+
+/* hover + focus feels alive */
+.popup-card.large select:hover{
+  border-color: rgba(124,58,237,0.55) !important;
+}
+
+.popup-card.large select:focus{
+  box-shadow: 0 0 0 5px rgba(124,58,237,0.14) !important;
+}
+/* =========================
+   PROMPT POPUP — FIXES
+   Purple: #6a3df0
+========================= */
+
+:root{
+  --ai-purple: #6a3df0;
+}
+
+/* 1) Fix the top-left X (move to top-right, smaller, no container) */
+.popup-close{
+  left: auto !important;
+  right: 18px !important;
+  top: 18px !important;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  width: auto !important;
+  height: auto !important;
+  padding: 4px !important;
+
+  font-size: 26px !important;   /* smaller */
+  line-height: 1 !important;
+  color: #64748b !important;
+}
+
+.popup-close:hover{
+  color: #0f172a !important;
+}
+
+/* 2) Add spacing so inputs aren’t hugging the popup edges */
+.popup-card.large{
+  padding: 28px 34px !important;
+}
+
+/* 3) SELECT (AI Model) — make it padded, nice, and restore caret */
+.popup-card.large select{
+  width: 100% !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(106, 61, 240, 0.45) !important;
+
+  padding: 18px 56px 18px 22px !important;  /* extra right padding for caret */
+  font-size: 16px !important;
+
+  outline: none !important;
+
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+
+  /* IMPORTANT: put caret INSIDE background so it doesn't get overridden */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236a3df0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 18px center,
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,250,255,0.96)) !important;
+
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07) !important;
+}
+
+/* focus glow */
+.popup-card.large select:focus{
+  border-color: rgba(106, 61, 240, 0.85) !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14), 0 14px 30px rgba(15, 23, 42, 0.07) !important;
+}
+
+/* 4) TEXTAREA (Prompt box) border matches */
+.popup-card.large textarea{
+  border: 1px solid rgba(106, 61, 240, 0.45) !important;
+  border-radius: 18px !important;
+}
+.popup-card.large textarea:focus{
+  outline: none !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14) !important;
+  border-color: rgba(106, 61, 240, 0.85) !important;
+}
+
+/* 5) Generate button more purple (#6a3df0) + less bold */
+.add-btn{
+  background: linear-gradient(180deg, #6a3df0 0%, #5430d8 100%) !important;
+  border: none !important;
+  font-weight: 600 !important; /* less bold */
+  box-shadow: 0 12px 26px rgba(106, 61, 240, 0.25) !important;
+}
+.add-btn:hover{
+  filter: brightness(0.96) !important;
+}
+
+/* 6) Cancel button less bold too */
+.cancel-btn{
+  font-weight: 600 !important;
+}
+/* ===== FINAL Prompt Box Override (put LAST) ===== */
+.popup-card.large textarea{
+  padding: 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(106, 61, 240, 0.55) !important;
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: 0 14px 34px rgba(106, 61, 240, 0.10) !important;
+  font-size: 15px !important;
+  color: #0f172a !important;
+}
+
+.popup-card.large textarea:focus{
+  outline: none !important;
+  border-color: rgba(106, 61, 240, 0.9) !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14),
+              0 16px 40px rgba(106, 61, 240, 0.14) !important;
+}
+
+
+
+
