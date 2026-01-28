@@ -6,6 +6,7 @@ import { supabase } from "./supabaseClient";
 import Lottie from "lottie-react";
 import boardAnim from "./assets/lottie/board.json";
 import deleteAnim from "./assets/lottie/delete.json"; 
+import emptySpaceImg from "./assets/EmptySpace.jpg";
 
 
 
@@ -71,6 +72,15 @@ const displayName =
 
 const initial = String(displayName).trim().charAt(0).toUpperCase() || "U";
 
+//Empty Column Image
+const getTypeClass = (type) => {
+  const colors = ["t-red","t-orange","t-green","t-teal","t-blue","t-indigo","t-purple","t-pink"];
+  const s = String(type || "").toLowerCase().trim();
+  if (!s) return "";
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) hash = (hash * 31 + s.charCodeAt(i)) >>> 0;
+  return colors[hash % colors.length];
+};
 
   //Organisation Header for Board
   useEffect(() => {
@@ -430,6 +440,19 @@ useEffect(() => {
   return () => document.removeEventListener("click", onDocClick);
 }, [searchOpen]);
 
+const isOverdue = (dateStr) => {
+  if (!dateStr) return false;
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return false;
+
+  const now = new Date();
+  // compare by date (ignore time)
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return end < today;
+};
+
+
 
 
   return (
@@ -583,85 +606,125 @@ useEffect(() => {
                     </div>
 
                     <div className="tasks-list">
-                      {list.map((task, index) => (
-                        <Draggable key={task.id} draggableId={String(task.id)} index={index}>
-                          {(provided) => (
-                            <div
-                              className="task-card"
-                              ref={(el) => {
-  provided.innerRef(el);
-  taskRefs.current[task.id] = el;
-}}
+  {list.length === 0 ? (
+    <div className="empty-column">
+      <img className="empty-column-img" src={emptySpaceImg} alt="No tasks" />
+      <div className="empty-column-text">
+        {colId === "todo" && "No tasks to start yet."}
+        {colId === "progress" && "Nothing in progress right now."}
+        {colId === "done" && "No completed tasks yet."}
+      </div>
+    </div>
+  ) : (
+    <>
+      {list.map((task, index) => (
+        <Draggable key={task.id} draggableId={String(task.id)} index={index}>
+          {(provided) => (
+            <div
+              className={`task-card priority-${String(task.priority || "").toLowerCase()}`}
+              ref={(el) => {
+                provided.innerRef(el);
+                taskRefs.current[task.id] = el;
+              }}
+              {...provided.draggableProps}
+              {...provided.dragHandleProps}
+              onClick={() => {
+                if (task.status === "todo") openPromptPopup(task);
+                if (task.status === "done") openDonePopup(task);
+              }}
+              style={{
+                cursor: task.status === "progress" ? "default" : "pointer",
+                opacity: task.ai_status === "thinking" ? 0.9 : 1,
+              }}
+            >
+              <button
+                className="task-menu"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteTarget(task);
+                  setShowDeleteModal(true);
+                }}
+                type="button"
+              >
+                ✕
+              </button>
 
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              onClick={() => {
-                                if (task.status === "todo") openPromptPopup(task);
-                                if (task.status === "done") openDonePopup(task);
-                              }}
-                              style={{
-                                cursor: task.status === "progress" ? "default" : "pointer",
-                                opacity: task.ai_status === "thinking" ? 0.9 : 1,
-                              }}
-                            >
-                              <button
-  className="task-menu"
-  onClick={(e) => {
-    e.stopPropagation();
-    setDeleteTarget(task);
-    setShowDeleteModal(true);
-  }}
->
-  ✕
-</button>
+              {/* TOP TAGS (priority + type beside each other) */}
+              <div className="task-top">
+                <span className={`pill priority ${String(task.priority || "").toLowerCase()}`}>
+                  {priorityLabel(task.priority)}
+                </span>
 
+                <span className={`pill type ${getTypeClass(task.type)}`}>
+                  {typeLabel(task.type)}
+                </span>
+              </div>
 
-                              <div className="task-title" title={task.title}>
-  {task.title}
+              {/* TITLE */}
+              <div className="task-name" title={task.title}>
+                {task.title}
+              </div>
+
+              {/* ✅ KEEP THIS EXACT LOGIC */}
+              {task.status === "todo" && <div className="task-hint">Click to prompt AI →</div>}
+              {task.ai_status === "queued" && <div className="task-hint subtle">Queued...</div>}
+              {task.ai_status === "thinking" && <div className="task-hint subtle">AI generating...</div>}
+
+              <div className="task-divider" />
+
+              {/* BOTTOM ROW: avatars left, due date right */}
+              <div className="task-bottom">
+                <div className="avatar-stack">
+                  <div
+                    className="avatar"
+                    title={`Assigned by: ${task.profiles?.username || profile?.username || "Unknown"}`}
+                  >
+                    {String(task.profiles?.username || profile?.username || "U")
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+
+                  <div
+                    className="avatar alt"
+                    title={`Assigned to: ${task.assigned_to ? "You" : "—"}`}
+                  >
+                    {task.assigned_to ? "Y" : "—"}
+                  </div>
+                </div>
+
+                {/* only show date if end_date exists */}
+                {task.end_date ? (
+                  <div className={`due-wrap ${isOverdue(task.end_date) ? "overdue" : ""}`}>
+                    <svg
+                      className="due-icon"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M7 3v2m10-2v2M4 8h16M6 5h12a2 2 0 012 2v13a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+
+                    <span className="due-date">{formatDue(task.end_date)}</span>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </Draggable>
+      ))}
+      {provided.placeholder}
+    </>
+  )}
 </div>
 
-<div className="task-created-by">
-  Assigned by: {task.profiles?.username || profile?.username || "Unknown"}
-</div>
-
-{/* NEW: meta row */}
-<div className="task-meta">
-  <span className="meta-chip type">Type: {typeLabel(task.type)}</span>
-  <span className="meta-chip priority">Priority: {priorityLabel(task.priority)}</span>
-  <span className="meta-chip due">Due: {formatDue(task.end_date) || "—"}</span>
-  <span className="meta-chip assignee">
-    <span className="meta-chip assignee">
-  Assigned to: {task.assigned_to ? (task.assigned_to === uid ? "You" : task.assigned_to) : "—"}
-</span>
-
-  </span>
-</div>
-
-
-                              {task.status === "todo" && (
-                                <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
-                                  Click to prompt AI →
-                                </div>
-                              )}
-
-                              {task.ai_status === "queued" && (
-                                <div style={{ marginTop: 8, fontSize: 12, color: "#888" }}>
-                                  Queued...
-                                </div>
-                              )}
-
-                              {task.ai_status === "thinking" && (
-                                <div style={{ marginTop: 8, fontSize: 12, color: "#888" }}>
-                                  AI generating...
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-
-                      {provided.placeholder}
-                    </div>
                   </div>
                 )}
               </Droppable>
