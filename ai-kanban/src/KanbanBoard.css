@@ -7,7 +7,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: #f4f4f4;
+  background: #ffffff; /* pure white */
 }
 
 /* ============================
@@ -15,7 +15,7 @@ body {
 ============================ */
 .kanban-container {
   min-height: 100vh;
-  background: #f4f4f4;
+  background: #ffffff;
 }
 
 .main-content {
@@ -29,31 +29,308 @@ body {
 ============================ */
 .header {
   background: #ffffff;
-  padding: 16px 28px;
+  padding: 20px 40px;
   border-bottom: 1px solid #e5e5e5;
   display: flex;
   align-items: center;
+  justify-content: space-between; /* ✅ ADD THIS */
   gap: 16px;
 }
+
 
 .welcome {
   font-size: 16px;
   font-weight: 600;
   color: #333;
 }
+.page-title {
+  font-size: 20px;
+  font-weight: 600;      /* 👈 professional */
+  color: #0f172a;
+  line-height: 1.2;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+.header-title-row{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-lottie{
+  width: 34px;      /* size of animation */
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-icon > div {
+  width: 100%;
+  height: 100%;
+}
+.header-left {
+  min-width: 0;
+}
+
+.header-right{
+  margin-left: auto; /* ✅ pushes it to far right */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+/* nicer popover container */
+.search-popover{
+  width: 420px;
+  border-radius: 16px;
+  box-shadow: 0 22px 70px rgba(2, 6, 23, 0.18);
+}
+
+/* header spacing + cleaner */
+.search-popover-header{
+  padding: 12px 14px;
+}
+
+.search-popover-header svg{
+  color: #94a3b8;
+}
+
+.search-popover-header input{
+  padding: 8px 0;
+}
+
+/* hint */
+.search-hint{
+  padding: 14px 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* results list wrapper */
+.search-results{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px;
+}
+
+/* IMPORTANT: remove browser button look */
+.search-item{
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: 0.12s ease;
+}
+
+.search-item:hover{
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+.search-item:focus{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.search-item-title{
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.search-item-meta{
+  margin-top: 2px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Empty state like your reference */
+.search-empty-state{
+  padding: 22px 14px 18px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.empty-illus{
+  color: #6366f1; /* soft professional purple */
+  opacity: 0.9;
+}
+
+
+.empty-title{
+  font-size: 18px;
+  font-weight: 600;   /* professional, not shouty */
+  color: #0f172a;
+}
+
+
+.empty-subtitle{
+  font-size: 14px;
+  color: #64748b;
+  margin-top: 6px;
+  line-height: 1.35;
+}
+
+
+/* icon buttons (search + close) */
+.icon-btn{
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.icon-btn:hover{
+  background: rgba(15, 23, 42, 0.05);
+}
+
+.icon-btn.subtle{
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: #64748b;
+}
+
+.header-action{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #0f172a;
+}
+
+.icon-inline{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+}
+
+.date-text{
+  font-size: 14px;
+  color: #0f172a;
+  font-weight: 500;
+}
+
+/* avatar */
+.avatar-circle{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #2563eb;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* search popover */
+.search-popover{
+  position: absolute;
+  right: 0;
+  top: 44px;
+  width: 360px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(2, 6, 23, 0.14);
+  overflow: hidden;
+  z-index: 3000;
+}
+
+.search-popover-header{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  color: #64748b;
+}
+
+.search-popover-header input{
+  border: none;
+  outline: none;
+  width: 100%;
+  font-size: 14px;
+  color: #0f172a;
+}
+
+.search-popover-body{
+  max-height: 280px;
+  overflow: auto;
+  padding: 6px;
+}
+
+.search-empty{
+  padding: 10px 10px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+
+
+
 
 /* ============================
    BOARD GRID
 ============================ */
-.board {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(320px, 1fr));
-  gap: 24px;
-  padding: 24px 40px;
-  background: #f3f3f3;
-  overflow-x: auto;
+.board{
+  background: #ffffff;
+  padding: 22px 36px;
+  gap: 22px;
 }
+
+/* grey columns like the reference */
+/* grey columns like the reference */
+.column{
+  background: #f4f6fb;
+  border: 1px solid #e6eaf2;
+  border-radius: 18px;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+/* column header clean */
+.column-header{
+  background: transparent;
+  border-bottom: 1px solid #e6eaf2;
+  padding: 14px 16px;
+}
+
 
 /* COLUMN PANEL */
 .column {
@@ -110,7 +387,7 @@ body {
   background: white;
   padding: 14px;
   padding-right: 46px;          /* ✅ reserve space for the X */
-  border-radius: 8px;
+  border-radius: 12px !important; 
   border: 1px solid #e0e0e0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   cursor: grab;
@@ -157,6 +434,43 @@ body {
   margin-top: 2px;
   color: #666;
 }
+.task-meta{
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meta-chip{
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.10);
+  background: rgba(15,23,42,0.03);
+  color: #334155;
+  font-weight: 500;
+}
+
+.meta-chip.priority{
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.18);
+}
+
+.meta-chip.type{
+  background: rgba(99,102,241,0.08);
+  border-color: rgba(99,102,241,0.18);
+}
+
+.meta-chip.due{
+  background: rgba(245,158,11,0.10);
+  border-color: rgba(245,158,11,0.22);
+}
+
+.meta-chip.assignee{
+  background: rgba(16,185,129,0.10);
+  border-color: rgba(16,185,129,0.22);
+}
+
 
 /* Not used in current KanbanBoard.js, but harmless if you re-add it later */
 .task-description {
@@ -170,6 +484,114 @@ body {
   display: inline-block;
   box-shadow: 0 1px 3px rgba(128, 96, 202, 0.18);
 }
+/* task meta chips */
+.task-meta{
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.meta-chip{
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #334155;
+  border: 1px solid #e2e8f0;
+}
+
+/* search empty state */
+.search-hint{
+  padding: 10px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.search-empty-state{
+  padding: 18px 10px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  gap: 8px;
+  color: #7c3aed; /* purple theme */
+}
+
+.empty-illus{
+  color: #7c3aed; /* makes svg purple */
+}
+
+.empty-title{
+  font-size: 16px;
+  font-weight: 500; /* NOT BOLD */
+  color: #0f172a;
+}
+
+.empty-subtitle{
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* delete modal (if you haven't added yet) */
+.delete-modal {
+  width: 420px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 28px 26px;
+  text-align: center;
+  box-shadow: 0 30px 80px rgba(2, 6, 23, 0.35);
+}
+
+.delete-anim {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 12px auto;
+}
+
+.delete-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 8px;
+}
+
+.delete-desc {
+  font-size: 14px;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.delete-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.btn-cancel {
+  flex: 1;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.btn-danger {
+  flex: 1;
+  background: #ef4444;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
 
 /* ============================
    PROMPT POPUP (TODO -> Prompt AI)
@@ -407,39 +829,1537 @@ body {
 /* ============================
    PASTEL COLUMN THEMING
 ============================ */
+/* Neutral columns */
+.column {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+}
+
 
 /* Base column */
-.column {
+/* .column {
   border-radius: 14px;
   overflow: hidden;
-}
+} */
 
 /* To Do — soft blue */
-.column.todo {
+/* .column.todo {
   background: #eef2ff;
   border: 1px solid #c7d2fe;
-}
+} */
 
 /* In Progress — soft yellow */
-.column.progress {
+/* .column.progress {
   background: #fff7ed;
   border: 1px solid #fed7aa;
-}
+} */
 
 /* Done — soft green */
-.column.done {
+/* .column.done {
   background: #ecfdf5;
   border: 1px solid #a7f3d0;
-}
+} */
 
 /* Header still white for contrast */
-.column-header {
+/* .column-header {
   background: #ffffff;
-}
+} */
 
 /* Task cards pop from pastel background */
-.column.todo .task-card,
+/* .column.todo .task-card,
 .column.progress .task-card,
 .column.done .task-card {
   background: #ffffff;
+} */
+/* ===== Column = card look (like image 1) ===== */
+
+.board{
+  background: #f6f7fb; /* softer board bg */
 }
+
+.column{
+  background: #f8fafc;
+  border: 1px solid #e6e8ef;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 520px; /* optional */
+}
+
+/* header looks like a card header */
+.column-header{
+  background: #f8fafc;
+  padding: 14px 16px;
+  border-bottom: 1px solid #eceef6;
+}
+
+/* title + count like the reference */
+.column-title{
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.task-count{
+  background: #ffffff;
+  border: 1px solid #e7e9f2;
+  color: #475569;
+  font-weight: 600;
+}
+
+/* inner list spacing */
+.tasks-list{
+  padding: 14px;
+  gap: 12px;
+}
+
+/* task cards: softer, cleaner */
+.task-card{
+  border-radius: 14px;
+  border: 1px solid #eef0f6;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.task-card:hover{
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.10);
+}
+
+/* OPTIONAL: small colored accent instead of full column color */
+/* .column.todo{ border-top: 4px solid #a5b4fc; }
+.column.progress{ border-top: 4px solid #fdba74; }
+.column.done{ border-top: 4px solid #86efac; } */
+.task-card{
+  background: #ffffff;
+  border: 1px solid #eef2f7;
+  border-radius: 12px !important; 
+  padding: 14px;
+  padding-right: 46px; /* keeps space for the X */
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+}
+
+.task-top{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.task-title-row{
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.task-name{
+  margin-top: 10px;          /* 👈 creates space from tags */
+  font-size: 15px;
+  font-weight: 500;          /* 👈 unbold (professional) */
+  color: #0f172a;
+  line-height: 1.4;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.pill{
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(15,23,42,0.08);
+  background: rgba(15,23,42,0.03);
+  color: #334155;
+  white-space: nowrap;
+}
+
+.pill.type{
+  background: rgba(124,58,237,0.08);
+  border-color: rgba(124,58,237,0.18);
+  color: #5b21b6;
+}
+
+/* priority colors */
+.pill.priority{
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.18);
+  color: #1d4ed8;
+}
+.pill.priority.high{
+  background: rgba(239,68,68,0.10);
+  border-color: rgba(239,68,68,0.22);
+  color: #b91c1c;
+}
+.pill.priority.medium{
+  background: rgba(245,158,11,0.12);
+  border-color: rgba(245,158,11,0.24);
+  color: #92400e;
+}
+.pill.priority.low{
+  background: rgba(16,185,129,0.12);
+  border-color: rgba(16,185,129,0.22);
+  color: #047857;
+}
+
+.task-hint{
+  margin-top: 8px;
+  font-size: 12px;
+  color: #64748b;
+}
+.task-hint.subtle{ color: #94a3b8; }
+
+.task-divider{
+  display: none !important;
+}
+
+
+.task-assignees{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.assignees-label{
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.avatar-stack{
+  display: flex;
+  align-items: center;
+}
+
+.avatar{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: #6366f1;
+  border: 2px solid #fff;
+  margin-left: -8px;
+}
+.avatar:first-child{ margin-left: 0; }
+
+.avatar.alt{
+  background: #0ea5e9;
+}
+
+.task-dates{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.date-item{
+  display: grid;
+  grid-template-columns: 18px auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: #f8fafc;
+  border: 1px solid #eef2f7;
+  flex: 1;
+}
+
+.date-icon{
+  opacity: 0.85;
+}
+.date-label{
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+.date-value{
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 650;
+  justify-self: end;
+}
+
+/* overdue end date turns red */
+.date-item.overdue{
+  background: rgba(239,68,68,0.08);
+  border-color: rgba(239,68,68,0.18);
+}
+.date-item.overdue .date-value{
+  color: #b91c1c;
+}
+/* ===== FINAL OVERRIDES (put at VERY BOTTOM) ===== */
+
+.board{
+  background: #ffffff !important;
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(320px, 1fr)) !important;
+  gap: 22px !important;
+  padding: 22px 36px !important;
+}
+
+.column{
+  background: #f4f6fb !important;
+  border: 1px solid #e6eaf2 !important;
+  border-radius: 18px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* remove ANY coloured top border accents */
+.column.todo,
+.column.progress,
+.column.done{
+  border-top: none !important;
+}
+
+.column-header{
+  background: transparent !important;
+  border-bottom: 1px solid #e6eaf2 !important;
+  padding: 14px 16px !important;
+}
+
+.task-card{
+  cursor: pointer !important;
+  background: #fff !important;
+  border: 1px solid #eef2f7 !important;
+  border-radius: 12px !important; 
+  padding: 14px !important;
+  padding-right: 46px !important;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06) !important;
+}
+/* ===== Priority gradient (FINAL) ===== */
+.pill.priority{
+  border: none !important;
+  color: #fff !important;
+  font-weight: 700 !important;
+  padding: 8px 14px !important;
+  border-radius: 8px !important;         /* less round */
+  line-height: 1 !important;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.14) !important;
+}
+
+/* High = purple gradient */
+.pill.priority.high{
+  background: linear-gradient(90deg, #a855f7 0%, #c084fc 55%, #d946ef 100%) !important;
+}
+
+/* Medium = teal/green gradient */
+.pill.priority.medium{
+  background: linear-gradient(90deg, #14b8a6 0%, #2dd4bf 55%, #34d399 100%) !important;
+}
+
+/* Low = blue gradient */
+.pill.priority.low{
+  background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 55%, #2563eb 100%) !important;
+}
+/* less bubbly */
+.task-card{
+  border-radius: 12px !important; 
+}
+
+.pill{
+  border-radius: 10px !important; /* type pill */
+  padding: 7px 12px !important;
+  font-weight: 650 !important;
+}
+
+.avatar{
+  border-radius: 10px !important; /* not fully circular */
+}
+
+/* ===== Priority badge — FLAT / MATTE (ref-accurate) ===== */
+.pill.priority{
+  border-radius: 6px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.1px;
+  color: rgba(255,255,255,0.9) !important;
+
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  box-shadow: none !important;        /* kills shine */
+  background-image: none !important;  /* baseline */
+}
+
+/* 🔴 High — muted pink/purple (flat) */
+.pill.priority.high{
+  background: linear-gradient(
+    180deg,
+    #c46ac6 0%,
+    #bb63bf 100%
+  ) !important;
+}
+
+/* 🟢 Medium — muted teal */
+.pill.priority.medium{
+  background: linear-gradient(
+    180deg,
+    #6ccbb8 0%,
+    #63c2ae 100%
+  ) !important;
+}
+
+/* 🔵 Low — muted blue */
+.pill.priority.low{
+  background: linear-gradient(
+    180deg,
+    #7f97e6 0%,
+    #748de0 100%
+  ) !important;
+}
+/* top row: priority + type beside each other */
+.task-top{
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* make pills flatter (no shiny/3D feel) */
+.pill{
+  box-shadow: none !important;
+  border-radius: 8px;          /* less “kiddy” than 999px */
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* priority can keep your colors, but make sure it's flat */
+.pill.priority{
+  box-shadow: none !important;
+}
+
+/* TYPE pill base: outline + soft fill (like your 2nd ref) */
+.pill.type{
+  background: transparent !important;
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  color: #334155;
+}
+
+/* “random” type color buckets (pastel outline style) */
+.pill.type.t-red{
+  background: rgba(239, 68, 68, 0.08) !important;
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #b91c1c;
+}
+.pill.type.t-orange{
+  background: rgba(245, 158, 11, 0.10) !important;
+  border-color: rgba(245, 158, 11, 0.38);
+  color: #92400e;
+}
+.pill.type.t-green{
+  background: rgba(34, 197, 94, 0.10) !important;
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #15803d;
+}
+.pill.type.t-teal{
+  background: rgba(20, 184, 166, 0.10) !important;
+  border-color: rgba(20, 184, 166, 0.35);
+  color: #0f766e;
+}
+.pill.type.t-blue{
+  background: rgba(59, 130, 246, 0.10) !important;
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #1d4ed8;
+}
+.pill.type.t-indigo{
+  background: rgba(99, 102, 241, 0.10) !important;
+  border-color: rgba(99, 102, 241, 0.35);
+  color: #4338ca;
+}
+.pill.type.t-purple{
+  background: rgba(168, 85, 247, 0.10) !important;
+  border-color: rgba(168, 85, 247, 0.35);
+  color: #6d28d9;
+}
+.pill.type.t-pink{
+  background: rgba(236, 72, 153, 0.10) !important;
+  border-color: rgba(236, 72, 153, 0.35);
+  color: #be185d;
+}
+/* make ALL pills the same height */
+.pill{
+  display: inline-flex;
+  align-items: center;
+  height: 30px;          /* <- same height for both */
+  padding: 0 12px;       /* <- same horizontal padding */
+  line-height: 30px;     /* keeps text vertically centered */
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+.task-card{
+  position: relative; /* needed for absolute accent */
+  border-radius: 8px !important;  
+  
+}
+
+/* small colored line on the left, aligned to the priority pill */
+.priority-accent{
+  position: absolute;
+  left: 0;
+  top: 14px;           /* match your card padding / pill top */
+  height: 30px;        /* EXACTLY same as .pill height */
+  width: 4px;
+  border-radius: 0 6px 6px 0;
+  background: #cbd5e1; /* default */
+}
+
+/* match your priority colors */
+.priority-accent.high{   background: #a855f7; } /* purple-ish like your High */
+.priority-accent.medium{ background: #34d399; } /* green */
+.priority-accent.low{    background: #60a5fa; } /* blue */
+/* ====== FINAL OVERRIDES (must be LAST in file) ====== */
+
+/* columns less round */
+.column{
+  border-radius: 6px !important;
+}
+
+/* cards less round */
+.task-card{
+  border-radius: 6px !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06) !important; /* less “shiny” */
+  padding: 18px 16px !important;   /* 👈 more vertical room */
+  padding-right: 46px !important;
+  border-radius: 8px !important;
+
+}
+
+/* pills: same height + less round */
+.pill{
+  display: inline-flex !important;
+  align-items: center !important;
+  height: 30px !important;
+  padding: 0 12px !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+/* priority: flat matte (no 3D) */
+.pill.priority{
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  box-shadow: none !important;
+}
+
+/* priority colours */
+.pill.priority.high{
+  background: linear-gradient(180deg,#c46ac6 0%,#bb63bf 100%) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+.pill.priority.medium{
+  background: linear-gradient(180deg,#6ccbb8 0%,#63c2ae 100%) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+
+.pill.priority.low{
+  background: linear-gradient(180deg,#7f97e6 0%,#748de0 100%) !important;
+  color: rgba(255,255,255,0.92) !important;
+}
+/* Due row (clean + compact) */
+.task-due{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 10px;
+}
+
+.due-label{
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.due-value{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.due-ico{
+  color: #94a3b8; /* icon colour */
+  display: inline-flex;
+  align-items: center;
+}
+
+.due-value.overdue{
+  color: #b91c1c;
+}
+/* Footer row: avatars left, date right */
+.task-footer{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #eef2f7;
+}
+
+/* Date (no label) */
+.due-value{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.due-ico{
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+}
+
+.due-value.overdue{
+  color: #b91c1c;
+}
+
+/* board should fill the screen (minus header) */
+.main-content{
+  min-height: 100vh;
+}
+
+/* make board take remaining height under header */
+.board{
+  flex: 1;                 /* take remaining space */
+  align-items: stretch;    /* all columns same height */
+}
+
+/* each column always same height */
+.column{
+  height: 100%;            /* match board height */
+  display: flex;
+  flex-direction: column;
+}
+
+/* header stays fixed, list scrolls */
+.tasks-list{
+  flex: 1;                 /* fill leftover space */
+  overflow-y: auto;        /* scroll inside column */
+  min-height: 0;           /* IMPORTANT for flex scroll to work */
+}
+/* ============================
+   TASK CARD — SIZE & SHAPE
+============================ */
+.task-card{
+  position: relative !important;
+  padding: 20px 20px 18px 24px !important; /* more breathing room */
+  min-height: 150px;                       /* makes card feel substantial */
+  border-radius: 10px !important;          /* less rounded, more pro */
+}
+
+/* ============================
+   LEFT PRIORITY ACCENT (FLAT)
+============================ */
+.task-card::before{
+  content: "";
+  position: absolute;
+  left: 0;                 /* FLUSH with card */
+  top: 16px;               /* aligns with pill row */
+  width: 6px;              /* dominant but subtle */
+  height: 34px;            /* slightly taller than pill */
+  border-radius: 0 4px 4px 0;
+  background: transparent;
+}
+
+/* 🔴 HIGH — dominant purple from gradient */
+.task-card.priority-high::before{
+  background: #bb63bf;
+}
+
+/* 🟢 MEDIUM — dominant teal from gradient */
+.task-card.priority-medium::before{
+  background: #63c2ae;
+}
+
+/* 🔵 LOW — dominant blue from gradient */
+.task-card.priority-low::before{
+  background: #748de0;
+}
+/* bottom row layout */
+.task-bottom{
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* ⬅️ pushes date to far right */
+  margin-top: 14px;
+}
+
+/* due date container */
+.due-wrap{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;          /* ⬅️ smaller */
+  color: #64748b;
+}
+
+.due-icon{
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+}
+
+.due-date{
+  font-weight: 600;
+}
+
+/* overdue state */
+.due-wrap.overdue{
+  color: #dc2626;
+}
+/* tags row */
+.task-top{
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;   /* ⬅️ space before title */
+}
+
+/* title */
+.task-name{
+  margin-top: 4px;
+  margin-bottom: 8px;    /* ⬅️ space before hint */
+  font-size: 15px;
+  font-weight: 500;      /* ⬅️ less shouty, more pro */
+  color: #0f172a;
+}
+
+/* hint text */
+.task-hint{
+  margin-bottom: 14px;   /* ⬅️ space before divider */
+  font-size: 12px;
+  color: #64748b;
+}
+.task-divider{
+  margin: 14px 0;
+}
+/* ===== EMPTY COLUMN STATE (PROFESSIONAL) ===== */
+
+.empty-column{
+  flex: 1;
+  min-height: 220px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 14px;
+  padding: 24px 16px;
+  text-align: center;
+}
+
+/* image — much smaller, softer */
+.empty-column-img{
+  width: 180px;        /* ⬅️ smaller */
+  max-width: 60%;
+  opacity: 0.75;       /* subtle */
+}
+
+/* text — professional SaaS tone */
+.empty-column-text{
+  font-size: 13px;
+  font-weight: 500;
+  color: #636970;      /* slate-500, NOT black */
+  line-height: 1.4;
+}
+.empty-column{
+  opacity: 0.9;
+}
+
+.empty-column-img{
+  filter: grayscale(10%);
+}
+/* =========================
+   PROMPT AI POPUP — UI REFRESH (CSS ONLY)
+   Paste at VERY BOTTOM of KanbanBoard.css
+========================= */
+
+/* overlay stays the same vibe but a bit cleaner */
+.popup-overlay{
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+/* main card */
+.popup-card.large{
+  width: min(840px, 92vw) !important;
+  max-height: 78vh !important;
+  padding: 26px 28px !important;
+  border-radius: 14px !important;     /* less rounded, more pro */
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22) !important;
+}
+
+/* close button: subtle, not shouty */
+.popup-close{
+  top: 16px !important;
+  right: 16px !important;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  background: #fff;
+  color: #475569 !important;
+  display: grid;
+  place-items: center;
+}
+.popup-close:hover{
+  background: rgba(15, 23, 42, 0.03);
+  color: #0f172a !important;
+}
+
+/* "Prompt AI" centered like you want */
+.popup-card.large > h3{
+  margin: 0 0 18px 0 !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 750 !important;
+  color: #0f172a !important;
+  letter-spacing: -0.2px;
+}
+
+/* ===== Task info block (title + desc) =====
+   Works with your current markup:
+   h3 then title div then optional desc div
+*/
+.popup-card.large > h3 + div{
+  margin-top: 0 !important;
+  font-weight: 650 !important;
+  font-size: 16px !important;
+  color: #0f172a !important;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+/* description (only if it exists — otherwise this will just be "tight" and harmless) */
+.popup-card.large > h3 + div + div{
+  margin-top: 10px !important;
+  font-size: 13px !important;
+  color: #64748b !important;
+  line-height: 1.45;
+  padding: 0 2px;
+}
+
+/* labels */
+.popup-card.large label{
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: #0f172a !important;
+  margin-top: 18px !important;
+  margin-bottom: 8px !important;
+  display: block;
+}
+
+/* ===== Ref-like input/select styling (glowy border, soft depth) ===== */
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100% !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+
+  border: 1px solid rgba(99, 102, 241, 0.35) !important;
+  background: linear-gradient(#ffffff, #ffffff) padding-box,
+              linear-gradient(90deg, rgba(99,102,241,0.55), rgba(168,85,247,0.55)) border-box !important;
+
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.12) !important;
+  outline: none !important;
+}
+
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18),
+              0 14px 34px rgba(99, 102, 241, 0.14) !important;
+}
+
+.popup-card.large textarea{
+  min-height: 160px;
+  resize: vertical;
+}
+
+/* bottom actions alignment */
+.popup-actions{
+  margin-top: 20px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+/* cancel keeps neutral */
+.cancel-btn{
+  background: rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  padding: 10px 18px !important;
+  font-weight: 650 !important;
+}
+.cancel-btn:hover{
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* ===== Generate button like your ref (purple gradient + white sparkles) ===== */
+.add-btn{
+  position: relative;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 11px 18px !important;
+  font-weight: 800 !important;
+  color: #fff !important;
+  cursor: pointer;
+
+  background: linear-gradient(90deg, #6d28d9 0%, #7c3aed 45%, #8b5cf6 100%) !important;
+  box-shadow: 0 16px 34px rgba(124, 58, 237, 0.28) !important;
+}
+
+.add-btn::after{
+  content: " ✦";
+  color: rgba(255,255,255,0.95);
+  margin-left: 6px;
+  font-size: 14px;
+}
+
+.add-btn::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), transparent 45%),
+              radial-gradient(circle at 70% 40%, rgba(255,255,255,0.18), transparent 48%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.add-btn:hover{ filter: brightness(1.02); }
+.add-btn:active{ transform: translateY(1px); }
+
+.add-btn:disabled{
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+/* =========================
+   PROMPT AI POPUP — REFINED (DARKER PURPLE + CLEANER LAYOUT + AI BG)
+   Paste at VERY BOTTOM of KanbanBoard.css
+========================= */
+
+/* overlay */
+.popup-overlay{
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(9px) !important;
+}
+
+/* card */
+.popup-card.large{
+  position: relative;
+  width: min(860px, 92vw) !important;
+  max-height: 78vh !important;
+  padding: 26px 30px 22px !important;
+  border-radius: 14px !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22) !important;
+  overflow: hidden;
+}
+
+/* subtle AI flowing background */
+.popup-card.large::before{
+  content: "";
+  position: absolute;
+  inset: -120px;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(520px 320px at 20% 18%, rgba(88, 28, 135, 0.20), transparent 60%),
+    radial-gradient(520px 320px at 85% 30%, rgba(67, 56, 202, 0.16), transparent 62%),
+    radial-gradient(620px 380px at 55% 92%, rgba(124, 58, 237, 0.12), transparent 62%),
+    conic-gradient(from 220deg at 55% 40%,
+      rgba(124,58,237,0.10),
+      rgba(99,102,241,0.08),
+      rgba(168,85,247,0.08),
+      rgba(124,58,237,0.10)
+    );
+  filter: blur(16px);
+}
+
+/* keep content above bg */
+.popup-card.large > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* centered title */
+.popup-card.large > h3{
+  margin: 0 0 16px 0 !important;
+  text-align: center !important;
+  font-size: 22px !important;
+  font-weight: 700 !important; /* less heavy */
+  color: #0f172a !important;
+  letter-spacing: -0.2px;
+}
+
+/* X button: smaller, no container */
+.popup-close{
+  top: 14px !important;
+  right: 14px !important;
+  width: 30px !important;
+  height: 30px !important;
+  border: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  color: #64748b !important;
+  font-size: 22px !important;
+  line-height: 1 !important;
+}
+.popup-close:hover{
+  color: #0f172a !important;
+  background: transparent !important;
+}
+
+/* ===== Task info: grouped nicely so it doesn't blend into inputs =====
+   your structure:
+   h3
+   (title div)
+   (desc div optional)
+*/
+.popup-card.large > h3 + div{
+  margin: 0 !important;
+  padding: 14px 16px !important;
+  border-radius: 12px !important;
+  background: rgba(255,255,255,0.70) !important;
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  font-weight: 650 !important;
+  font-size: 16px !important;
+  color: #0f172a !important;
+}
+
+/* desc under title but still inside same "task area" feel */
+.popup-card.large > h3 + div + div{
+  margin: 10px 2px 18px 2px !important;
+  padding-left: 2px !important;
+  font-size: 13px !important;
+  color: #64748b !important;
+  line-height: 1.45 !important;
+}
+
+/* add spacing before first label so it feels separated */
+.popup-card.large label:first-of-type{
+  margin-top: 10px !important;
+}
+
+/* labels: not too bold */
+.popup-card.large label{
+  font-size: 13px !important;
+  font-weight: 650 !important;
+  color: #0f172a !important;
+  margin-top: 16px !important;
+  margin-bottom: 8px !important;
+}
+
+/* inputs: darker purple + inner padding away from borders */
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100% !important;
+  border-radius: 14px !important;
+  padding: 14px 16px !important;
+  font-size: 14px !important;
+  color: #0f172a !important;
+
+  /* darker + prettier */
+  border: 1px solid rgba(88, 28, 135, 0.42) !important;
+  background:
+    linear-gradient(#ffffff, #ffffff) padding-box,
+    linear-gradient(90deg, rgba(88,28,135,0.72), rgba(124,58,237,0.62), rgba(67,56,202,0.62)) border-box !important;
+
+  box-shadow: 0 12px 30px rgba(88, 28, 135, 0.10) !important;
+  outline: none !important;
+
+  /* keeps them visually away from card edge */
+  margin: 0 auto !important;
+}
+
+/* focus ring: darker purple */
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  box-shadow: 0 0 0 4px rgba(88, 28, 135, 0.16),
+              0 16px 40px rgba(88, 28, 135, 0.12) !important;
+}
+
+.popup-card.large textarea{
+  min-height: 170px !important;
+  resize: vertical;
+}
+
+/* dropdown arrow nice color */
+.popup-card.large select{
+  color: #0f172a !important;
+}
+
+/* buttons row */
+.popup-actions{
+  margin-top: 18px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 12px !important;
+}
+
+/* cancel: lighter weight */
+.cancel-btn{
+  background: rgba(15, 23, 42, 0.04) !important;
+  border: 1px solid rgba(15, 23, 42, 0.10) !important;
+  color: #0f172a !important;
+  border-radius: 12px !important;
+  padding: 10px 18px !important;
+  font-weight: 600 !important; /* less bold */
+}
+.cancel-btn:hover{
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+/* generate: darker + sparkles, less bold text */
+.add-btn{
+  position: relative;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 11px 18px !important;
+  font-weight: 650 !important; /* less bold */
+  color: rgba(255,255,255,0.96) !important;
+  cursor: pointer;
+
+  background: linear-gradient(90deg, #4c1d95 0%, #6d28d9 45%, #5b21b6 100%) !important;
+  box-shadow: 0 18px 36px rgba(76, 29, 149, 0.24) !important;
+}
+
+.add-btn::after{
+  content: " ✦";
+  color: rgba(255,255,255,0.92);
+  margin-left: 8px;
+  font-size: 14px;
+}
+
+.add-btn::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18), transparent 46%),
+    radial-gradient(circle at 72% 45%, rgba(255,255,255,0.14), transparent 50%);
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.add-btn:hover{ filter: brightness(1.02); }
+.add-btn:active{ transform: translateY(1px); }
+
+.add-btn:disabled{
+  opacity: 0.55 !important;
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+}
+/* ===== Prompt AI: Softer white + animated purple flow ===== */
+
+.popup-card.large::before{
+  content: "";
+  position: absolute;
+  inset: -160px;
+  pointer-events: none;
+
+  background:
+    radial-gradient(520px 360px at 20% 18%, rgba(124, 58, 237, 0.14), transparent 60%),
+    radial-gradient(520px 360px at 85% 28%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(600px 420px at 55% 88%, rgba(168, 85, 247, 0.10), transparent 65%),
+    radial-gradient(420px 320px at 45% 45%, rgba(255,255,255,0.65), transparent 70%);
+
+  filter: blur(22px);
+  opacity: 0.6;
+
+  animation: ai-flow 18s ease-in-out infinite alternate;
+}
+
+/* subtle floating movement */
+@keyframes ai-flow {
+  0% {
+    transform: translate(-10px, -6px) scale(1);
+  }
+  50% {
+    transform: translate(18px, 12px) scale(1.03);
+  }
+  100% {
+    transform: translate(-6px, 16px) scale(1.02);
+  }
+}
+/* =========================
+   Prompt AI polish pass
+========================= */
+
+/* 1) kill the bright white “blinding” middle */
+.popup-card.large::before{
+  /* remove the strong white spot + soften overall */
+  background:
+    radial-gradient(520px 360px at 20% 18%, rgba(124, 58, 237, 0.14), transparent 60%),
+    radial-gradient(520px 360px at 85% 28%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(600px 420px at 55% 88%, rgba(168, 85, 247, 0.10), transparent 65%),
+    /* softer neutral glow instead of white hotspot */
+    radial-gradient(520px 360px at 50% 45%, rgba(15, 23, 42, 0.035), transparent 70%);
+  opacity: 0.55;
+}
+
+/* also slightly tint the base so it’s not pure white */
+.popup-card.large{
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92)) !important;
+}
+
+/* 2) remove the arrow (dropdown caret) */
+.popup-card.large select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: none !important;
+  padding-right: 18px; /* no caret space needed */
+}
+
+/* 3) move dropdown away from the container edge */
+.popup-card.large{
+  padding: 26px 34px !important; /* more breathing room inside modal */
+}
+.popup-card.large select,
+.popup-card.large textarea{
+  width: 100%;
+  margin-left: 6px;              /* small inset so it doesn't hug edge */
+  margin-right: 6px;
+}
+
+/* 4) make everything smoother (less harsh corners, softer shadows) */
+.popup-card.large{
+  border-radius: 18px !important;
+  box-shadow: 0 26px 80px rgba(2, 6, 23, 0.22) !important;
+}
+
+.popup-card.large input,
+.popup-card.large select,
+.popup-card.large textarea{
+  border-radius: 16px !important;
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.popup-card.large input:focus,
+.popup-card.large select:focus,
+.popup-card.large textarea:focus{
+  outline: none !important;
+  border-color: rgba(124, 58, 237, 0.55) !important;
+  box-shadow: 0 0 0 5px rgba(124, 58, 237, 0.12) !important;
+}
+
+/* 5) darken generate button + keep sparkles */
+.add-btn{
+  background: linear-gradient(90deg, #3b0764 0%, #5b21b6 45%, #4c1d95 100%) !important;
+  box-shadow:
+    0 18px 42px rgba(76, 29, 149, 0.40),
+    inset 0 1px 0 rgba(255,255,255,0.22) !important;
+  font-weight: 600 !important;
+}
+
+.add-btn:hover{
+  filter: brightness(1.04);
+  box-shadow:
+    0 22px 50px rgba(76, 29, 149, 0.46),
+    inset 0 1px 0 rgba(255,255,255,0.26) !important;
+}
+/* ===== Custom select caret (AI Model) ===== */
+
+.popup-card.large select{
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  /* room for caret */
+  padding-right: 46px !important;
+
+  /* subtle gradient like the rest */
+  background:
+    linear-gradient(180deg, #ffffff, #fafaff) padding-box,
+    linear-gradient(180deg, rgba(124,58,237,0.55), rgba(124,58,237,0.35)) border-box;
+}
+
+/* caret wrapper */
+.popup-card.large select{
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='16' height='16' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236b21a8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 16px 16px;
+}
+
+/* hover + focus feels alive */
+.popup-card.large select:hover{
+  border-color: rgba(124,58,237,0.55) !important;
+}
+
+.popup-card.large select:focus{
+  box-shadow: 0 0 0 5px rgba(124,58,237,0.14) !important;
+}
+/* =========================
+   PROMPT POPUP — FIXES
+   Purple: #6a3df0
+========================= */
+
+:root{
+  --ai-purple: #6a3df0;
+}
+
+/* 1) Fix the top-left X (move to top-right, smaller, no container) */
+.popup-close{
+  left: auto !important;
+  right: 18px !important;
+  top: 18px !important;
+
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  width: auto !important;
+  height: auto !important;
+  padding: 4px !important;
+
+  font-size: 26px !important;   /* smaller */
+  line-height: 1 !important;
+  color: #64748b !important;
+}
+
+.popup-close:hover{
+  color: #0f172a !important;
+}
+
+/* 2) Add spacing so inputs aren’t hugging the popup edges */
+.popup-card.large{
+  padding: 28px 34px !important;
+}
+
+/* 3) SELECT (AI Model) — make it padded, nice, and restore caret */
+.popup-card.large select{
+  width: 100% !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(106, 61, 240, 0.45) !important;
+
+  padding: 18px 56px 18px 22px !important;  /* extra right padding for caret */
+  font-size: 16px !important;
+
+  outline: none !important;
+
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+
+  /* IMPORTANT: put caret INSIDE background so it doesn't get overridden */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%236a3df0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    no-repeat right 18px center,
+    linear-gradient(180deg, rgba(255,255,255,0.96), rgba(250,250,255,0.96)) !important;
+
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.07) !important;
+}
+
+/* focus glow */
+.popup-card.large select:focus{
+  border-color: rgba(106, 61, 240, 0.85) !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14), 0 14px 30px rgba(15, 23, 42, 0.07) !important;
+}
+
+/* 4) TEXTAREA (Prompt box) border matches */
+.popup-card.large textarea{
+  border: 1px solid rgba(106, 61, 240, 0.45) !important;
+  border-radius: 18px !important;
+}
+.popup-card.large textarea:focus{
+  outline: none !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14) !important;
+  border-color: rgba(106, 61, 240, 0.85) !important;
+}
+
+/* 5) Generate button more purple (#6a3df0) + less bold */
+.add-btn{
+  background: linear-gradient(180deg, #6a3df0 0%, #5430d8 100%) !important;
+  border: none !important;
+  font-weight: 600 !important; /* less bold */
+  box-shadow: 0 12px 26px rgba(106, 61, 240, 0.25) !important;
+}
+.add-btn:hover{
+  filter: brightness(0.96) !important;
+}
+
+/* 6) Cancel button less bold too */
+.cancel-btn{
+  font-weight: 600 !important;
+}
+/* ===== FINAL Prompt Box Override (put LAST) ===== */
+.popup-card.large textarea{
+  padding: 16px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(106, 61, 240, 0.55) !important;
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: 0 14px 34px rgba(106, 61, 240, 0.10) !important;
+  font-size: 15px !important;
+  color: #0f172a !important;
+}
+
+.popup-card.large textarea:focus{
+  outline: none !important;
+  border-color: rgba(106, 61, 240, 0.9) !important;
+  box-shadow: 0 0 0 6px rgba(106, 61, 240, 0.14),
+              0 16px 40px rgba(106, 61, 240, 0.14) !important;
+}
+/* =========================
+   DONE / AI OUTPUT MODAL — match Prompt AI styling
+   Paste at VERY BOTTOM of KanbanBoard.css
+========================= */
+
+:root{
+  --ai-purple: #6a3df0;
+}
+
+/* overlay similar to Prompt AI */
+.modal-overlay{
+  background: rgba(15, 23, 42, 0.45) !important;
+  backdrop-filter: blur(9px) !important;
+}
+
+/* modal card base */
+.modal-card{
+  position: relative !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(15, 23, 42, 0.10) !important;
+  box-shadow: 0 30px 90px rgba(2, 6, 23, 0.22) !important;
+  overflow: hidden !important;
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92)) !important;
+}
+
+/* flowing “AI” background inside modal */
+.modal-card::before{
+  content: "";
+  position: absolute;
+  inset: -160px;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    radial-gradient(520px 360px at 20% 18%, rgba(106, 61, 240, 0.14), transparent 60%),
+    radial-gradient(520px 360px at 85% 28%, rgba(99, 102, 241, 0.12), transparent 62%),
+    radial-gradient(600px 420px at 55% 88%, rgba(168, 85, 247, 0.10), transparent 65%),
+    radial-gradient(520px 360px at 50% 45%, rgba(15, 23, 42, 0.035), transparent 70%);
+  filter: blur(22px);
+  animation: ai-flow 18s ease-in-out infinite alternate;
+}
+
+/* keep content above bg */
+.modal-card > *{
+  position: relative;
+  z-index: 1;
+}
+
+/* header polish */
+.modal-header{
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: transparent !important;
+}
+
+.modal-title{
+  font-weight: 700 !important;
+  letter-spacing: -0.2px;
+}
+
+/* agent line: softer + consistent */
+.modal-subtitle{
+  color: #64748b !important;
+}
+.modal-subtitle span{
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+
+/* close button like prompt (simple, clean) */
+.modal-close{
+  border: none !important;
+  background: transparent !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 4px !important;
+  border-radius: 0 !important;
+  color: #64748b !important;
+  font-size: 26px !important;
+  line-height: 1 !important;
+}
+.modal-close:hover{
+  color: #0f172a !important;
+}
+
+/* section label */
+.section-label{
+  color: #475569 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.02em;
+}
+
+/* AI output box = same “glowy input” style */
+.output-box{
+  border-radius: 18px !important;
+  padding: 16px !important;
+  border: 1px solid rgba(106, 61, 240, 0.45) !important;
+  background: rgba(255,255,255,0.92) !important;
+  box-shadow: 0 14px 34px rgba(106, 61, 240, 0.10) !important;
+  color: #0f172a !important;
+}
+
+/* footer background */
+.modal-footer{
+  background: transparent !important;
+  border-top: 1px solid rgba(15, 23, 42, 0.08) !important;
+}
+
+/* Reset button = purple theme, less bold */
+.btn-primary{
+  background: linear-gradient(180deg, var(--ai-purple) 0%, #5430d8 100%) !important;
+  border: none !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 12px 26px rgba(106, 61, 240, 0.25) !important;
+}
+.btn-primary:hover{
+  filter: brightness(0.97) !important;
+}
+
+/* same animation used in Prompt AI */
+@keyframes ai-flow {
+  0%   { transform: translate(-10px, -6px) scale(1); }
+  50%  { transform: translate(18px, 12px) scale(1.03); }
+  100% { transform: translate(-6px, 16px) scale(1.02); }
+}
+
+
+
+
+

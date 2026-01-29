@@ -39,11 +39,20 @@
   font-size: 15px;
   padding: 10px 8px;
   border-radius: 8px;
+
   display: flex;
   align-items: center;
   gap: 12px;
+
+  background: none;
+  border: none !important;   /* 🔥 force remove */
+  outline: none !important;  /* 🔥 force remove */
+  box-shadow: none !important;
+
   transition: 0.2s ease;
+  cursor: pointer;
 }
+
 
 /* Icon style */
 .side-link .icon {
@@ -67,7 +76,12 @@
   background: #e9e4ff;
   color: #6a3df0;
   font-weight: 600;
+
+  border: none !important;   /* 🔥 THIS removes the outline */
+  outline: none !important;
+  box-shadow: none !important;
 }
+
 
 .side-link.active .icon {
   color: #6a3df0;

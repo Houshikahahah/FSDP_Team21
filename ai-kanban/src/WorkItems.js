@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ChevronDown, ChevronRight, Plus, X, Search, Tag } from "lucide-react";
 import { supabase } from "./supabaseClient";
@@ -16,6 +16,7 @@ const AVATAR_COLORS = [
   "#06b6d4",
   "#3b82f6",
 ];
+
 
 const getAvatarColor = (userId) => {
   if (!userId) return AVATAR_COLORS[0];
@@ -73,6 +74,15 @@ export default function WorkItems({ user, profile }) {
   const { id: orgId } = useParams();
   const isOrgMode = !!orgId;
 
+  useEffect(() => {
+  if (isOrgMode && orgId) {
+    localStorage.setItem("activeOrgId", orgId);
+  }
+}, [isOrgMode, orgId]);
+
+
+  const socketRef = useRef(null);
+
   const [tasks, setTasks] = useState([]);
   const [assignedProfiles, setAssignedProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -107,55 +117,59 @@ export default function WorkItems({ user, profile }) {
   // ✅ LIVE TASKS VIA SOCKET (PERSONAL + ORG)
   // =========================================================
   useEffect(() => {
-    if (!user) return;
+  if (!user) return;
 
-    setLoading(true);
+  setLoading(true);
 
-    const s = io("http://localhost:5000", {
+  if (!socketRef.current) {
+    socketRef.current = io("http://localhost:5000", {
       transports: ["polling", "websocket"],
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 500,
       timeout: 5000,
-      query: isOrgMode ? { userId: user.id, orgId } : { userId: user.id },
+      query: {
+        userId: user.id,
+        orgId: isOrgMode ? orgId : undefined,
+      },
     });
+  }
 
-    const onLoadPersonal = (list) => {
-      if (Array.isArray(list)) setTasks(list);
-      setLoading(false);
-    };
 
-    const onUpdatePersonal = (list) => {
-      if (Array.isArray(list)) setTasks(list);
-    };
+  const s = socketRef.current;
 
-    const onLoadOrg = (list) => {
-      if (Array.isArray(list)) setTasks(list);
-      setLoading(false);
-    };
+  const onLoad = (list) => {
+    if (Array.isArray(list)) setTasks(list);
+    setLoading(false);
+  };
 
-    const onUpdateOrg = (list) => {
-      if (Array.isArray(list)) setTasks(list);
-    };
+  s.on("loadTasks", onLoad);
+  s.on("updateTasks", onLoad);
+  s.on("loadOrgTasks", onLoad);
+  s.on("updateOrgTasks", onLoad);
 
-    s.on("loadTasks", onLoadPersonal);
-    s.on("updateTasks", onUpdatePersonal);
-    s.on("loadOrgTasks", onLoadOrg);
-    s.on("updateOrgTasks", onUpdateOrg);
+  s.on("connect_error", (e) => {
+    console.log("❌ WorkItems socket error:", e?.message || e);
+    setLoading(false);
+  });
 
-    s.on("connect_error", (e) => {
-      console.log("❌ WorkItems socket error:", e?.message || e);
-      setLoading(false);
-    });
+  return () => {
+    s.off("loadTasks", onLoad);
+    s.off("updateTasks", onLoad);
+    s.off("loadOrgTasks", onLoad);
+    s.off("updateOrgTasks", onLoad);
+  };
+}, [user]);
 
-    return () => {
-      s.off("loadTasks", onLoadPersonal);
-      s.off("updateTasks", onUpdatePersonal);
-      s.off("loadOrgTasks", onLoadOrg);
-      s.off("updateOrgTasks", onUpdateOrg);
-      s.disconnect();
-    };
-  }, [user, isOrgMode, orgId]);
+useEffect(() => {
+  if (!socketRef.current || !user) return;
+
+  socketRef.current.emit("rejoin", {
+    userId: user.id,
+    orgId: isOrgMode ? orgId : null,
+  });
+}, [user, orgId, isOrgMode]);
+
 
   // =========================================================
   // ✅ KEEP MODAL IN SYNC WITH LIVE TASK UPDATES
@@ -322,23 +336,8 @@ export default function WorkItems({ user, profile }) {
         </div>
       </div>
 
-      {/* TABS */}
-      <div className="top-tabs">
-        <button onClick={() => navigate("/kanban")} className="top-tab">
-          Kanban Board
-        </button>
-        <button className="top-tab active">Work Items</button>
 
-        {isOrgMode && (
-          <button
-            className="top-tab"
-            onClick={() => navigate("/organisations")}
-            style={{ marginLeft: "auto" }}
-          >
-            Organisations
-          </button>
-        )}
-      </div>
+
 
       {/* NAV */}
       <div className="workitems-nav">
