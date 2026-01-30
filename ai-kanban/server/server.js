@@ -7,8 +7,6 @@ const http = require("http");
 const cors = require("cors");
 const { Server } = require("socket.io");
 const { createClient } = require("@supabase/supabase-js");
-
-const { handleGeminiChat } = require("./aiGeminiChat");
 const { handleAIChat } = require("../src/aiChat.js");
 
 
@@ -40,7 +38,6 @@ app.get("/health", (_, res) => res.send("ok"));
 // ✅ Don’t register the same route twice.
 // Pick one, OR give them different endpoints:
 app.post("/api/ai/chat", handleAIChat);
-app.post("/api/ai/gemini", handleGeminiChat);
 
 // ====================== SUPABASE ======================
 const supabase = createClient(
