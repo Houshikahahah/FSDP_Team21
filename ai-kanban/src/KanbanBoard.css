@@ -2433,3 +2433,99 @@ body {
     0 2px 6px rgba(106, 61, 240, 0.24),
     0 0 0 1px rgba(106, 61, 240, 0.08);
 }
+/* Priority pill base */
+.pill.priority {
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.12);
+}
+
+/* High */
+.pill.priority.high {
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+}
+
+/* Medium */
+.pill.priority.medium {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+}
+
+/* Low */
+.pill.priority.low {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+/* ===== Priority pills (override-safe) ===== */
+.pill.priority {
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: none;
+  box-shadow: 0 2px 6px rgba(17, 24, 39, 0.18);
+  background: none; /* important reset */
+}
+
+/* High */
+.pill.priority.high {
+  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%) !important;
+}
+
+/* Medium */
+.pill.priority.medium {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%) !important;
+}
+
+/* Low */
+.pill.priority.low {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+}
+/* ===== Task card priority accent strip ===== */
+.task-card {
+  position: relative;
+}
+
+/* Base strip */
+.task-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 6px;
+  border-radius: 6px;
+}
+
+/* HIGH */
+.task-card.priority-high::before {
+  background: linear-gradient(180deg, #ec4899 0%, #a855f7 100%);
+}
+
+/* MEDIUM */
+.task-card.priority-medium::before {
+  background: linear-gradient(180deg, #f59e0b 0%, #f97316 100%);
+}
+
+/* LOW */
+.task-card.priority-low::before {
+  background: linear-gradient(180deg, #22c55e 0%, #16a34a 100%);
+}
+.task-card::before {
+  box-shadow: inset -1px 0 0 rgba(255,255,255,0.35);
+}
+
+/* ✅ Restore the old (app) font for the board title */
+.header .page-title{
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Arial, sans-serif !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em !important;
+}
+.modal-title {
+  color: #4f46e5; /* indigo-600 */
+}
+/* Done modal title color (task title) */
+.modal-title{
+  color: var(--ai-purple) !important; /* #6a3df0 */
+}

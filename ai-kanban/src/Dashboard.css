@@ -579,3 +579,20 @@
     font-size: 28px;
   }
 }
+.kanban-container{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+}
+.page-title{
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif !important;
+
+  font-size: 28px !important;
+  font-weight: 600 !important;
+  color: #1a1a1a !important;
+  letter-spacing: 0 !important;
+  line-height: 1.15 !important;
+}
+.page-title{
+  margin-top: 8px;   /* try 4–6px */
+}

@@ -640,7 +640,8 @@ function KanbanBoard({ socket, user, profile }) {
                                     {/* TOP TAGS (priority + type beside each other) */}
                                     <div className="task-top">
                                       <span className={`pill priority ${String(task.priority || "").toLowerCase()}`}>
-                                        {priorityLabel(task.priority)}
+                                        {String(task.priority || "—").toUpperCase()}
+
                                       </span>
 
                                       {String(task.type || "").trim() ? (
