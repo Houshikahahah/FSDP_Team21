@@ -116,59 +116,84 @@ export default function WorkItems({ user, profile }) {
   // =========================================================
   // ✅ LIVE TASKS VIA SOCKET (PERSONAL + ORG)
   // =========================================================
-  useEffect(() => {
+useEffect(() => {
   if (!user) return;
 
   setLoading(true);
 
-  if (!socketRef.current) {
-    socketRef.current = io("http://localhost:5000", {
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 500,
-      timeout: 5000,
-      query: {
-        userId: user.id,
-        orgId: isOrgMode ? orgId : undefined,
-      },
-    });
+  const SERVER_URL =
+    (process.env.REACT_APP_SERVER_URL || "http://localhost:5000").replace(/\/$/, "");
+
+  // recreate socket when org changes
+  if (socketRef.current) {
+    socketRef.current.disconnect();
+    socketRef.current = null;
   }
 
+  const s = io(SERVER_URL, {
+    transports: ["polling", "websocket"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 500,
+    timeout: 10000,
+    query: {
+      userId: user.id,
+      orgId: isOrgMode ? orgId : undefined,
+    },
+  });
 
-  const s = socketRef.current;
+  socketRef.current = s;
 
-  const onLoad = (list) => {
+  // ✅ personal handler (ONLY if not org mode)
+  const onPersonal = (list) => {
+    if (isOrgMode) return; // ignore personal updates on org page
     if (Array.isArray(list)) setTasks(list);
     setLoading(false);
   };
 
-  s.on("loadTasks", onLoad);
-  s.on("updateTasks", onLoad);
-  s.on("loadOrgTasks", onLoad);
-  s.on("updateOrgTasks", onLoad);
+  // ✅ org handler (ONLY if org mode)
+  const onOrg = (list) => {
+    if (!isOrgMode) return; // ignore org updates on personal page
+    if (Array.isArray(list)) setTasks(list);
+    setLoading(false);
+  };
 
-  s.on("connect_error", (e) => {
+  const onErr = (e) => {
     console.log("❌ WorkItems socket error:", e?.message || e);
     setLoading(false);
-  });
+  };
+
+  s.on("loadTasks", onPersonal);
+  s.on("updateTasks", onPersonal);
+
+  s.on("loadOrgTasks", onOrg);
+  s.on("updateOrgTasks", onOrg);
+
+  s.on("connect_error", onErr);
 
   return () => {
-    s.off("loadTasks", onLoad);
-    s.off("updateTasks", onLoad);
-    s.off("loadOrgTasks", onLoad);
-    s.off("updateOrgTasks", onLoad);
+    s.off("loadTasks", onPersonal);
+    s.off("updateTasks", onPersonal);
+    s.off("loadOrgTasks", onOrg);
+    s.off("updateOrgTasks", onOrg);
+    s.off("connect_error", onErr);
+    s.disconnect();
   };
-}, [user]);
+}, [user, orgId, isOrgMode]);
+
+
+
 
 useEffect(() => {
-  if (!socketRef.current || !user) return;
+  const s = socketRef.current;
+  if (!s || !user || !s.connected) return;
 
-  socketRef.current.emit("rejoin", {
+  s.emit("rejoin", {
     userId: user.id,
     orgId: isOrgMode ? orgId : null,
   });
 }, [user, orgId, isOrgMode]);
+
 
 
   // =========================================================

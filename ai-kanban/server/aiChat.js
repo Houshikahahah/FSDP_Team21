@@ -1,6 +1,7 @@
 
 // aiChat.js (CommonJS)
-const { runAIAgent } = require("./aiAgent");
+require("./aiAgent.js")
+
 
 // In-memory session store
 const sessions = new Map();
