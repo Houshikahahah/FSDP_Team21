@@ -63,6 +63,8 @@ function buildDoneTrendPolyline(tasks, daysCount = 7, width = 480, height = 120)
   });
 
   const values = days.map((d) => counts[dayKeyLocal(d)] || 0);
+
+  // IMPORTANT: never let max be 0 (keeps line visible / stable)
   const maxY = Math.max(1, ...values);
   const stepX = width / Math.max(1, days.length - 1);
 
@@ -78,7 +80,7 @@ function buildDoneTrendPolyline(tasks, daysCount = 7, width = 480, height = 120)
 export default function Dashboard({ user, profile }) {
   const uid = user?.id;
 
-  // ✅ org sync source (you already set this in KanbanBoard.js)
+  // ✅ org sync source (set in KanbanBoard.js)
   const activeOrgId = useMemo(() => {
     return localStorage.getItem("activeOrgId") || null;
   }, []);
@@ -89,8 +91,42 @@ export default function Dashboard({ user, profile }) {
   const [tasks, setTasks] = useState([]);
   const [liveConnected, setLiveConnected] = useState(false);
 
+  // ✅ org name (instead of org id)
+  const [orgName, setOrgName] = useState("");
+
+  // ✅ top-right search
+  const [searchQuery, setSearchQuery] = useState("");
+
   // ---------------------------
-  // ✅ SAME TASK SCOPE AS KANBAN
+  // Fetch org name (if org mode)
+  // ---------------------------
+  useEffect(() => {
+    const fetchOrgName = async () => {
+      if (!isOrgMode || !activeOrgId) {
+        setOrgName("");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("organisations")
+        .select("name")
+        .eq("id", activeOrgId)
+        .single();
+
+      if (error) {
+        console.error("Dashboard fetchOrgName error:", error);
+        setOrgName("Organisation");
+        return;
+      }
+
+      setOrgName(data?.name || "Organisation");
+    };
+
+    fetchOrgName();
+  }, [isOrgMode, activeOrgId]);
+
+  // ---------------------------
+  // ✅ SAME TASK SCOPE AS KANBAN (org = whole org)
   // ---------------------------
   useEffect(() => {
     if (!uid) return;
@@ -98,7 +134,8 @@ export default function Dashboard({ user, profile }) {
     const fetchTasks = async () => {
       let q = supabase
         .from("tasks")
-        .select(`
+        .select(
+          `
           id,
           title,
           description,
@@ -118,17 +155,17 @@ export default function Dashboard({ user, profile }) {
           ai_agent,
           ai_status,
           profiles:user_id (username)
-        `)
+        `
+        )
         .order("created_at", { ascending: false });
 
       if (isOrgMode && activeOrgId) {
-  // ✅ WHOLE ORG
-  q = q.eq("organisation_id", activeOrgId);
-} else {
-  // personal only
-  q = q.is("organisation_id", null).eq("user_id", uid);
-}
-
+        // ✅ WHOLE ORG
+        q = q.eq("organisation_id", activeOrgId);
+      } else {
+        // ✅ personal only
+        q = q.is("organisation_id", null).eq("user_id", uid);
+      }
 
       const { data, error } = await q;
       if (error) console.error("Dashboard fetchTasks error:", error);
@@ -143,7 +180,6 @@ export default function Dashboard({ user, profile }) {
       .channel(channelName)
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, fetchTasks)
       .subscribe((status) => {
-        // status can be "SUBSCRIBED" etc
         setLiveConnected(status === "SUBSCRIBED");
       });
 
@@ -153,7 +189,7 @@ export default function Dashboard({ user, profile }) {
   }, [uid, isOrgMode, activeOrgId]);
 
   // ----- time range filtering -----
-  const filteredTasks = useMemo(() => {
+  const rangeTasks = useMemo(() => {
     const start = getStartDate(timeRange);
     if (!start) return tasks;
 
@@ -164,16 +200,50 @@ export default function Dashboard({ user, profile }) {
     });
   }, [tasks, timeRange]);
 
-  // ----- KPI metrics -----
+  // ✅ Search filtering (tasks + agents)
+  const filteredTasks = useMemo(() => {
+    const q = String(searchQuery || "").trim().toLowerCase();
+    if (!q) return rangeTasks;
+
+    return rangeTasks.filter((t) => {
+      const title = String(t.title || "").toLowerCase();
+      const desc = String(t.description || "").toLowerCase();
+      const agent = String(t.ai_agent || "").toLowerCase();
+      const status = String(t.status || "").toLowerCase();
+      const type = String(t.type || "").toLowerCase();
+      const priority = String(t.priority || "").toLowerCase();
+      return (
+        title.includes(q) ||
+        desc.includes(q) ||
+        agent.includes(q) ||
+        status.includes(q) ||
+        type.includes(q) ||
+        priority.includes(q)
+      );
+    });
+  }, [rangeTasks, searchQuery]);
+
+  // ----- KPI metrics (based on filteredTasks) -----
   const metrics = useMemo(() => {
     const total = filteredTasks.length;
+    const todo = filteredTasks.filter((t) => t.status === STATUS_TODO).length;
     const inProgress = filteredTasks.filter((t) => t.status === STATUS_PROGRESS).length;
     const completed = filteredTasks.filter((t) => t.status === STATUS_DONE).length;
-    const overdue = 0;
-    return { total, inProgress, completed, overdue };
+
+    const now = new Date();
+    const overdue = filteredTasks.filter((t) => {
+      if (!t.end_date) return false;
+      const d = safeDate(t.end_date);
+      if (!d) return false;
+      const end = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return end < today && t.status !== STATUS_DONE;
+    }).length;
+
+    return { total, todo, inProgress, completed, overdue };
   }, [filteredTasks]);
 
-  // ----- Agent panel -----
+  // ----- Agents panel (based on filteredTasks) -----
   const agents = useMemo(() => {
     const map = new Map();
 
@@ -184,10 +254,10 @@ export default function Dashboard({ user, profile }) {
       map.get(agentName).push(t);
     });
 
-    return Array.from(map.entries()).map(([agentName, list]) => {
-      const thinking = list.find((x) => x.ai_status === "thinking");
-      const inProg = list.find((x) => x.status === STATUS_PROGRESS);
-      const latest = [...list].sort((a, b) => {
+    const list = Array.from(map.entries()).map(([agentName, agentTasks]) => {
+      const thinking = agentTasks.find((x) => x.ai_status === "thinking");
+      const inProg = agentTasks.find((x) => x.status === STATUS_PROGRESS);
+      const latest = [...agentTasks].sort((a, b) => {
         const da = safeDate(a.updated_at || a.created_at)?.getTime() || 0;
         const db = safeDate(b.updated_at || b.created_at)?.getTime() || 0;
         return db - da;
@@ -201,7 +271,7 @@ export default function Dashboard({ user, profile }) {
           : current?.status === STATUS_PROGRESS
           ? "Active"
           : current?.status === STATUS_DONE
-          ? "Completed"
+          ? "Done"
           : "Idle";
 
       const progress =
@@ -221,9 +291,20 @@ export default function Dashboard({ user, profile }) {
         progress,
       };
     });
-  }, [filteredTasks]);
 
-  // ----- Analytics -----
+    // ✅ search can also match agent name (even if no tasks matched title/desc)
+    const q = String(searchQuery || "").trim().toLowerCase();
+    if (!q) return list;
+
+    return list.filter((a) => {
+      const name = String(a.name || "").toLowerCase();
+      const task = String(a.task || "").toLowerCase();
+      const st = String(a.status || "").toLowerCase();
+      return name.includes(q) || task.includes(q) || st.includes(q);
+    });
+  }, [filteredTasks, searchQuery]);
+
+  // ----- Analytics (based on metrics + agents) -----
   const analytics = useMemo(() => {
     const total = metrics.total || 0;
     const completion = total === 0 ? 0 : Math.round((metrics.completed / total) * 100);
@@ -240,7 +321,7 @@ export default function Dashboard({ user, profile }) {
     return { completion, utilization, throughput, efficiency };
   }, [metrics, agents, timeRange]);
 
-  // ----- Feed -----
+  // ----- Feed (based on filteredTasks) -----
   const combinedFeed = useMemo(() => {
     const recent = [...filteredTasks]
       .sort((a, b) => {
@@ -252,22 +333,38 @@ export default function Dashboard({ user, profile }) {
 
     return recent.map((t) => {
       if (t.ai_status === "thinking") return `AI is working on: ${t.title}`;
-      if (t.status === STATUS_DONE) return `Task completed: ${t.title}`;
+      if (t.status === STATUS_DONE) return `Task done: ${t.title}`;
       if (t.status === STATUS_PROGRESS) return `In progress: ${t.title}`;
       return `Task updated: ${t.title}`;
     });
   }, [filteredTasks]);
 
+  // ✅ Trend days: never 1 day (graph disappears). Today shows last 7 days.
+  const trendDays = useMemo(() => {
+    if (timeRange === "today") return 7;
+    if (timeRange === "7d") return 7;
+    if (timeRange === "30d") return 30;
+    return 30;
+  }, [timeRange]);
+
+  // ✅ Polyline uses the FULL tasks list (so trend isn't ruined by search)
   const polyPoints = useMemo(() => {
-    return buildDoneTrendPolyline(tasks, 7, 480, 120);
-  }, [tasks]);
+    // If you want the trend to also respect org/personal, keep tasks (already scoped)
+    return buildDoneTrendPolyline(tasks, trendDays, 480, 120);
+  }, [tasks, trendDays]);
 
   return (
     <div className="dashboard-body">
       <header className="dash-header-bar">
         <h1 className="page-title">Dashboard</h1>
+
         <div className="header-right">
-          <input className="search-input" placeholder="Search tasks or agents..." />
+          <input
+            className="search-input"
+            placeholder="Search tasks or agents..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           <div className="user-chip">{liveConnected ? "ON" : "OFF"}</div>
         </div>
       </header>
@@ -276,7 +373,8 @@ export default function Dashboard({ user, profile }) {
         Mode: <b>{isOrgMode ? "Organisation" : "Personal"}</b>
         {isOrgMode && activeOrgId ? (
           <>
-            {" "}• Org ID: <b>{activeOrgId}</b>
+            {" "}
+            • Organisation: <b>{orgName || "Loading..."}</b>
           </>
         ) : null}
       </div>
@@ -287,17 +385,27 @@ export default function Dashboard({ user, profile }) {
           <p>{metrics.total}</p>
           <span className="stat-sub">All tasks in the system</span>
         </div>
+
+        {/* ✅ NEW: To Do KPI card (inserted before In Progress) */}
+        <div className="stats-card">
+          <h4>To Do</h4>
+          <p>{metrics.todo}</p>
+          <span className="stat-sub">Not started yet</span>
+        </div>
+
         <div className="stats-card">
           <h4>In Progress</h4>
           <p>{metrics.inProgress}</p>
           <span className="stat-sub">Currently being handled</span>
         </div>
+
         <div className="stats-card">
-          <h4>Completed</h4>
+          <h4>Done</h4>
           <p>{metrics.completed}</p>
           <span className="stat-sub">Successfully finished</span>
         </div>
-        <div className="stats-card">
+
+        <div className={`stats-card ${metrics.overdue ? "overdue-card" : ""}`}>
           <h4>Overdue</h4>
           <p className="overdue">{metrics.overdue}</p>
           <span className="stat-sub">Require attention</span>
@@ -325,6 +433,7 @@ export default function Dashboard({ user, profile }) {
           <section className="panel analytics-panel">
             <div className="panel-header">
               <h2>Workflow Analytics</h2>
+              {/* ✅ not hardcoded */}
               <span className="panel-tag subtle">{rangeLabel[timeRange]}</span>
             </div>
 
@@ -364,13 +473,18 @@ export default function Dashboard({ user, profile }) {
           <section className="panel linechart-panel">
             <div className="panel-header">
               <h2>Workflow Efficiency</h2>
-              <span className="panel-tag subtle">Done trend (7 days)</span>
+              {/* ✅ not hardcoded, and makes sense for today */}
+              <span className="panel-tag subtle">
+                Done trend ({timeRange === "today" ? "7 days" : rangeLabel[timeRange]})
+              </span>
             </div>
 
             <div className="line-chart">
               <div className="line-chart-header">
                 <span>Tasks completed over time</span>
-                <span className="chart-period">Last 7 days</span>
+                <span className="chart-period">
+                  {timeRange === "today" ? "Last 7 days" : rangeLabel[timeRange]}
+                </span>
               </div>
 
               <svg className="linechart-svg" viewBox="0 0 480 120" preserveAspectRatio="none">
@@ -392,7 +506,8 @@ export default function Dashboard({ user, profile }) {
           <section className="panel feed-panel">
             <div className="panel-header">
               <h2>Live Activity Feed</h2>
-              <span className="panel-tag subtle">{timeRange === "today" ? "Real-time" : "Historical"}</span>
+              {/* ✅ not hardcoded */}
+              <span className="panel-tag subtle">{rangeLabel[timeRange]}</span>
             </div>
 
             <ul className="feed-list">

@@ -397,8 +397,9 @@ useEffect(() => {
                     ? "To Do"
                     : status === "progress"
                     ? "In Progress"
-                    : "Completed"}
+                    : "Done"}
                 </h3>
+
                 <span className="count">{getItemsByStatus(status).length}</span>
               </div>
             </div>
@@ -644,7 +645,7 @@ useEffect(() => {
                 >
                   <option value="status:todo">To-do</option>
                   <option value="status:progress">In Progress</option>
-                  <option value="status:done">Completed</option>
+                  <option value="status:done">Done</option>
                 </select>
               </div>
 

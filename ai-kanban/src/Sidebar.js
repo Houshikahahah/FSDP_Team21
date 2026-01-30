@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   FiHome,
   FiGrid,
+  FiList,
   FiLayout,
   FiUser,
   FiSettings,
@@ -11,6 +12,7 @@ import {
   FiChevronLeft,
   FiChevronRight,
 } from "react-icons/fi";
+
 import { useLocale } from "./LocaleContext";
 import "./Sidebar.css";
 
@@ -119,7 +121,7 @@ export default function Sidebar() {
           title={isCollapsed ? t("nav.workitems") : ""}
         >
           <span className="icon">
-            <FiGrid />
+            <FiList />
           </span>
           {!isCollapsed && (
             <span className="link-text">{t("nav.workitems")}</span>
