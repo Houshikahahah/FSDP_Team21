@@ -56,7 +56,7 @@ app.post("/api/ai/chat", handleAIChat);
 // ====================== SUPABASE ======================
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // ====================== SERVER + SOCKET ======================
@@ -93,19 +93,20 @@ async function processTaskWithOpenRouter(history, model) {
 
   try {
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: safeModel,
-        messages: [
-          { role: "system", content: "You are an expert AI coding assistant. Be concise." },
-          ...history,
-        ],
-      }),
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+  },
+  body: JSON.stringify({
+    model: safeModel,
+    messages: [
+      { role: "system", content: "You are an expert AI coding assistant. Be concise." },
+      ...history,
+    ],
+  }),
+});
+
 
     const data = await response.json();
 

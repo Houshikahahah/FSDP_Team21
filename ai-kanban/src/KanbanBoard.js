@@ -121,10 +121,11 @@ function KanbanBoard({ socket, user, profile }) {
     const loadModels = async () => {
       try {
         const SERVER_URL = process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
-        fetch(`${SERVER_URL}/api/models`)
-
-
+        
+        const res = await fetch(`${SERVER_URL}/api/models`);
+        if (!res.ok) throw new Error(`Models API failed: ${res.status}`);
         const json = await res.json();
+
 
         const list = Array.isArray(json.models) ? json.models : [];
         setModels(list);
