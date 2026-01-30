@@ -23,7 +23,14 @@ function formatDateMaybe(value) {
     if (!value) return "—";
     const d = new Date(value);
     if (Number.isNaN(d.getTime())) return "—";
-    return d.toLocaleString();
+    return d.toLocaleString("en-SG", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   } catch {
     return "—";
   }
@@ -40,12 +47,12 @@ function isImageFile(file) {
 }
 
 /* =========================
-   toast
+   toast notification
 ========================= */
 function Toast({ toast, onClose }) {
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(onClose, 3200);
+    const t = setTimeout(onClose, 3800);
     return () => clearTimeout(t);
   }, [toast, onClose]);
 
@@ -53,53 +60,58 @@ function Toast({ toast, onClose }) {
 
   const tone = toast.tone || "neutral";
   const toneMap = {
-    neutral: { bar: "rgba(17,24,39,0.14)" },
-    success: { bar: "rgba(31,157,106,0.32)" },
-    danger: { bar: "rgba(226,61,61,0.32)" },
-    info: { bar: "rgba(47,111,237,0.30)" },
+    neutral: { bg: "rgba(255,255,255,0.96)", border: "rgba(255,255,255,0.3)", accent: "#64748b" },
+    success: { bg: "rgba(16,185,129,0.95)", border: "rgba(255,255,255,0.25)", accent: "#059669" },
+    danger: { bg: "rgba(239,68,68,0.95)", border: "rgba(255,255,255,0.25)", accent: "#dc2626" },
+    info: { bg: "rgba(59,130,246,0.95)", border: "rgba(255,255,255,0.25)", accent: "#2563eb" },
+    warning: { bg: "rgba(245,158,11,0.95)", border: "rgba(255,255,255,0.25)", accent: "#d97706" },
   };
+
+  const config = toneMap[tone] || toneMap.neutral;
 
   return (
     <div
       style={{
         position: "fixed",
-        right: 18,
-        bottom: 18,
-        zIndex: 220,
-        width: "min(460px, calc(100vw - 36px))",
-        padding: "12px 14px",
-        borderRadius: 14,
-        background: "rgba(255,255,255,0.96)",
-        border: "1px solid rgba(17,24,39,0.14)",
-        boxShadow: "0 22px 54px rgba(17,24,39,0.16)",
-        backdropFilter: "blur(12px)",
+        right: 24,
+        bottom: 24,
+        zIndex: 9999,
+        width: "min(420px, calc(100vw - 48px))",
+        padding: "16px 18px",
+        borderRadius: 12,
+        background: config.bg,
+        border: `1px solid ${config.border}`,
+        boxShadow: "0 24px 64px rgba(0,0,0,0.40), 0 0 0 1px rgba(0,0,0,0.08)",
+        backdropFilter: "blur(16px)",
         display: "flex",
-        gap: 10,
+        gap: 14,
         alignItems: "flex-start",
-        overflow: "hidden",
+        color: tone === "neutral" ? "#1e293b" : "#fff",
+        fontFamily: '"DM Sans", -apple-system, sans-serif',
+        animation: "toastSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       role="status"
       aria-live="polite"
     >
-      <div
-        aria-hidden="true"
-        style={{
-          width: 6,
-          borderRadius: 999,
-          background: (toneMap[tone] || toneMap.neutral).bar,
-          alignSelf: "stretch",
-        }}
-      />
-      <div style={{ fontSize: 18, lineHeight: "18px", marginTop: 2 }}>{toast.icon || "ℹ️"}</div>
+      <style>{`
+        @keyframes toastSlide {
+          from { transform: translateX(120%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      `}</style>
+
+      <div style={{ fontSize: 20, lineHeight: "20px" }}>{toast.icon || "ℹ️"}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 950, color: "#111827", fontSize: 13 }}>{toast.title || "Done"}</div>
+        <div style={{ fontWeight: 700, fontSize: 14.5, letterSpacing: "-0.01em", marginBottom: 4 }}>
+          {toast.title || "Notification"}
+        </div>
         {toast.message && (
           <div
             style={{
-              color: "rgba(17,24,39,0.72)",
-              fontSize: 13,
-              marginTop: 3,
-              lineHeight: 1.35,
+              opacity: 0.92,
+              fontSize: 13.5,
+              lineHeight: 1.45,
+              fontWeight: 500,
               wordBreak: "break-word",
             }}
           >
@@ -113,13 +125,22 @@ function Toast({ toast, onClose }) {
           border: "none",
           background: "transparent",
           cursor: "pointer",
-          fontWeight: 950,
-          color: "rgba(17,24,39,0.55)",
+          fontWeight: 700,
+          color: tone === "neutral" ? "rgba(30,41,59,0.5)" : "rgba(255,255,255,0.7)",
           padding: 6,
           margin: -6,
-          borderRadius: 10,
+          borderRadius: 8,
+          fontSize: 16,
+          lineHeight: "16px",
+          transition: "all 0.2s ease",
         }}
-        aria-label="Close toast"
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = tone === "neutral" ? "rgba(0,0,0,0.05)" : "rgba(255,255,255,0.15)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = "transparent";
+        }}
+        aria-label="Close notification"
       >
         ✕
       </button>
@@ -130,7 +151,7 @@ function Toast({ toast, onClose }) {
 /* =========================
    modal
 ========================= */
-function Modal({ open, title, subtitle, children, footer, onClose }) {
+function Modal({ open, title, subtitle, children, footer, onClose, danger }) {
   if (!open) return null;
 
   return (
@@ -138,42 +159,61 @@ function Modal({ open, title, subtitle, children, footer, onClose }) {
       style={{
         position: "fixed",
         inset: 0,
-        zIndex: 230,
-        background: "rgba(17,24,39,0.45)",
+        zIndex: 9000,
+        background: "rgba(0,0,0,0.75)",
+        backdropFilter: "blur(8px)",
         display: "grid",
         placeItems: "center",
-        padding: 18,
+        padding: 20,
+        animation: "fadeIn 0.25s ease",
       }}
       onMouseDown={onClose}
       role="dialog"
       aria-modal="true"
       aria-label={title || "Modal"}
     >
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes modalSlide {
+          from { transform: scale(0.92) translateY(20px); opacity: 0; }
+          to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+      `}</style>
+
       <div
         onMouseDown={(e) => e.stopPropagation()}
         style={{
-          width: "min(620px, 100%)",
+          width: "min(560px, 100%)",
           borderRadius: 16,
-          background: "rgba(255,255,255,0.98)",
-          border: "1px solid rgba(17,24,39,0.16)",
-          boxShadow: "0 30px 90px rgba(17,24,39,0.28)",
+          background: "#fff",
+          border: "1px solid rgba(226,232,240,0.6)",
+          boxShadow: "0 32px 96px rgba(0,0,0,0.35)",
           overflow: "hidden",
+          animation: "modalSlide 0.35s cubic-bezier(0.16, 1, 0.3, 1)",
         }}
       >
         <div
           style={{
-            padding: "14px 16px",
+            padding: "20px 24px",
+            borderBottom: "1px solid rgba(226,232,240,0.8)",
             display: "flex",
             alignItems: "flex-start",
             justifyContent: "space-between",
-            gap: 12,
-            borderBottom: "1px solid rgba(17,24,39,0.08)",
+            gap: 16,
+            background: danger ? "linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%)" : "linear-gradient(135deg, #f8fafc 0%, #fff 100%)",
           }}
         >
-          <div style={{ display: "grid", gap: 3 }}>
-            <div style={{ fontWeight: 950, color: "#111827" }}>{title}</div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 17, color: danger ? "#991b1b" : "#0f172a", letterSpacing: "-0.02em" }}>
+              {title}
+            </div>
             {subtitle && (
-              <div style={{ fontSize: 12, fontWeight: 800, color: "rgba(17,24,39,0.62)" }}>{subtitle}</div>
+              <div style={{ fontSize: 13.5, fontWeight: 500, color: danger ? "#dc2626" : "#64748b", marginTop: 4 }}>
+                {subtitle}
+              </div>
             )}
           </div>
           <button
@@ -182,11 +222,19 @@ function Modal({ open, title, subtitle, children, footer, onClose }) {
               border: "none",
               background: "transparent",
               cursor: "pointer",
-              fontWeight: 950,
-              color: "rgba(17,24,39,0.60)",
-              padding: 6,
-              margin: -6,
-              borderRadius: 10,
+              fontWeight: 700,
+              color: "#64748b",
+              padding: 8,
+              margin: -8,
+              borderRadius: 8,
+              fontSize: 16,
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(0,0,0,0.06)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "transparent";
             }}
             aria-label="Close modal"
           >
@@ -194,17 +242,18 @@ function Modal({ open, title, subtitle, children, footer, onClose }) {
           </button>
         </div>
 
-        <div style={{ padding: 16 }}>{children}</div>
+        <div style={{ padding: 24 }}>{children}</div>
 
         {footer && (
           <div
             style={{
-              padding: 16,
-              borderTop: "1px solid rgba(17,24,39,0.08)",
+              padding: "16px 24px",
+              borderTop: "1px solid rgba(226,232,240,0.8)",
               display: "flex",
               justifyContent: "flex-end",
-              gap: 10,
+              gap: 12,
               flexWrap: "wrap",
+              background: "#f8fafc",
             }}
           >
             {footer}
@@ -216,16 +265,38 @@ function Modal({ open, title, subtitle, children, footer, onClose }) {
 }
 
 /* =========================
-   UI bits
+   UI Components
 ========================= */
-function Pill({ children, tone = "neutral" }) {
-  const tones = {
-    neutral: { border: "1px solid rgba(17,24,39,0.12)", bg: "rgba(17,24,39,0.06)", color: "rgba(17,24,39,0.78)" },
-    brand: { border: "1px solid rgba(47,111,237,0.18)", bg: "rgba(47,111,237,0.10)", color: "rgba(17,24,39,0.92)" },
-    success: { border: "1px solid rgba(31,157,106,0.18)", bg: "rgba(31,157,106,0.10)", color: "rgba(17,24,39,0.92)" },
-    danger: { border: "1px solid rgba(226,61,61,0.18)", bg: "rgba(226,61,61,0.10)", color: "rgba(17,24,39,0.92)" },
+function Badge({ children, variant = "default" }) {
+  const variants = {
+    default: {
+      bg: "linear-gradient(135deg, #e2e8f0 0%, #f1f5f9 100%)",
+      color: "#475569",
+      border: "1px solid rgba(148,163,184,0.3)",
+    },
+    primary: {
+      bg: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+      color: "#fff",
+      border: "1px solid rgba(255,255,255,0.2)",
+    },
+    success: {
+      bg: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+      color: "#fff",
+      border: "1px solid rgba(255,255,255,0.2)",
+    },
+    danger: {
+      bg: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+      color: "#fff",
+      border: "1px solid rgba(255,255,255,0.2)",
+    },
+    warning: {
+      bg: "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
+      color: "#fff",
+      border: "1px solid rgba(255,255,255,0.2)",
+    },
   };
-  const t = tones[tone] || tones.neutral;
+
+  const style = variants[variant] || variants.default;
 
   return (
     <span
@@ -233,12 +304,17 @@ function Pill({ children, tone = "neutral" }) {
         display: "inline-flex",
         alignItems: "center",
         gap: 6,
-        padding: "7px 10px",
+        padding: "6px 12px",
         borderRadius: 999,
-        fontSize: 12,
-        fontWeight: 950,
+        fontSize: 11.5,
+        fontWeight: 700,
+        textTransform: "uppercase",
+        letterSpacing: "0.05em",
         whiteSpace: "nowrap",
-        ...t,
+        background: style.bg,
+        color: style.color,
+        border: style.border,
+        boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
       }}
     >
       {children}
@@ -246,38 +322,46 @@ function Pill({ children, tone = "neutral" }) {
   );
 }
 
-function Switch({ checked, onChange, label, description }) {
+function Switch({ checked, onChange, label, description, disabled }) {
   return (
     <div
       style={{
         display: "flex",
-        gap: 12,
+        gap: 16,
         alignItems: "flex-start",
         justifyContent: "space-between",
-        padding: "10px 0",
-        borderBottom: "1px solid rgba(17,24,39,0.06)",
+        padding: "14px 0",
+        borderBottom: "1px solid rgba(226,232,240,0.6)",
       }}
     >
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontWeight: 950, fontSize: 13, color: "rgba(17,24,39,0.92)" }}>{label}</div>
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <div style={{ fontWeight: 600, fontSize: 14, color: "#1e293b", letterSpacing: "-0.01em" }}>{label}</div>
         {description && (
-          <div style={{ fontWeight: 800, fontSize: 12, color: "rgba(17,24,39,0.62)", marginTop: 2 }}>{description}</div>
+          <div style={{ fontWeight: 500, fontSize: 13, color: "#64748b", marginTop: 4, lineHeight: 1.4 }}>
+            {description}
+          </div>
         )}
       </div>
 
       <button
         type="button"
-        onClick={() => onChange(!checked)}
+        onClick={() => !disabled && onChange(!checked)}
+        disabled={disabled}
         aria-pressed={checked}
         style={{
-          width: 44,
-          height: 26,
+          width: 48,
+          height: 28,
           borderRadius: 999,
-          border: "1px solid rgba(17,24,39,0.14)",
-          background: checked ? "rgba(47,111,237,0.92)" : "rgba(17,24,39,0.08)",
+          border: "1px solid rgba(203,213,225,0.8)",
+          background: checked
+            ? "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)"
+            : "linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)",
           position: "relative",
-          cursor: "pointer",
+          cursor: disabled ? "not-allowed" : "pointer",
           flex: "0 0 auto",
+          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+          boxShadow: checked ? "0 4px 14px rgba(59,130,246,0.35)" : "0 2px 8px rgba(0,0,0,0.08)",
+          opacity: disabled ? 0.5 : 1,
         }}
       >
         <span
@@ -285,13 +369,13 @@ function Switch({ checked, onChange, label, description }) {
           style={{
             position: "absolute",
             top: 3,
-            left: checked ? 22 : 3,
-            width: 20,
-            height: 20,
+            left: checked ? 24 : 3,
+            width: 22,
+            height: 22,
             borderRadius: 999,
             background: "#fff",
-            boxShadow: "0 8px 18px rgba(17,24,39,0.16)",
-            transition: "left 0.15s ease",
+            boxShadow: "0 3px 12px rgba(0,0,0,0.18)",
+            transition: "left 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
           }}
         />
       </button>
@@ -299,171 +383,63 @@ function Switch({ checked, onChange, label, description }) {
   );
 }
 
-function SectionCard({ title, subtitle, children, right, styles }) {
+function Card({ title, subtitle, children, actions, variant = "default" }) {
   return (
-    <section style={styles.card} aria-label={title}>
-      <div style={styles.cardHeader}>
-        <div style={{ display: "grid", gap: 3 }}>
-          <div style={styles.cardTitle}>{title}</div>
-          {subtitle && <div style={styles.cardSubtitle}>{subtitle}</div>}
+    <section
+      style={{
+        borderRadius: 16,
+        border: "1px solid rgba(226,232,240,0.8)",
+        background: "#fff",
+        boxShadow: "0 4px 20px rgba(0,0,0,0.04), 0 0 0 1px rgba(0,0,0,0.02)",
+        overflow: "hidden",
+      }}
+      aria-label={title}
+    >
+      <div
+        style={{
+          padding: "18px 24px",
+          borderBottom: "1px solid rgba(226,232,240,0.8)",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          gap: 16,
+          background: variant === "danger"
+            ? "linear-gradient(135deg, #fee2e2 0%, #fef2f2 100%)"
+            : "linear-gradient(135deg, #f8fafc 0%, #fff 100%)",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontWeight: 700,
+              fontSize: 16,
+              color: variant === "danger" ? "#991b1b" : "#0f172a",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            {title}
+          </div>
+          {subtitle && (
+            <div style={{ fontSize: 13.5, fontWeight: 500, color: variant === "danger" ? "#dc2626" : "#64748b", marginTop: 4 }}>
+              {subtitle}
+            </div>
+          )}
         </div>
-        {right}
+        {actions}
       </div>
-      <div style={styles.cardBody}>{children}</div>
+      <div style={{ padding: 24 }}>{children}</div>
     </section>
   );
 }
 
 /* =========================
-   styles factory (shorter)
-========================= */
-function S(tt) {
-  const card = {
-    borderRadius: 16,
-    border: `1px solid ${tt.border}`,
-    background: "rgba(255,255,255,0.96)",
-    boxShadow: "0 18px 42px rgba(17,24,39,0.10)",
-    overflow: "hidden",
-  };
-
-  const btnBase = { borderRadius: 12, padding: "10px 14px", cursor: "pointer", fontWeight: 950 };
-
-  return {
-    page: {
-      minHeight: "100vh",
-      width: "100%",
-      position: "relative",
-      padding: 22,
-      color: tt.text,
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-    },
-
-    bg: { position: "fixed", inset: 0, zIndex: -2, background: tt.pageBg },
-    bgGrid: {
-      position: "fixed",
-      inset: 0,
-      zIndex: -1,
-      backgroundImage:
-        "linear-gradient(to right, rgba(17,24,39,0.04) 1px, transparent 1px)," +
-        "linear-gradient(to bottom, rgba(17,24,39,0.04) 1px, transparent 1px)",
-      backgroundSize: "64px 64px",
-      opacity: 0.10,
-      pointerEvents: "none",
-    },
-
-    container: { maxWidth: 1180, margin: "0 auto" },
-
-    topbar: {
-      maxWidth: 1180,
-      margin: "0 auto 14px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
-      flexWrap: "wrap",
-    },
-
-    breadcrumb: { display: "flex", alignItems: "center", gap: 10, color: "rgba(17,24,39,0.62)", fontWeight: 850, fontSize: 13 },
-
-    btn: { ...btnBase, border: `1px solid ${tt.border}`, background: "rgba(255,255,255,0.90)", color: "rgba(17,24,39,0.86)" },
-    btnPrimary: { ...btnBase, border: "none", background: `linear-gradient(90deg, ${tt.primary}, ${tt.primary2})`, color: "#fff" },
-    btnDanger: { ...btnBase, border: "none", background: `linear-gradient(90deg, ${tt.danger}, ${tt.danger2})`, color: "#fff" },
-
-    hero: { ...card, padding: 16, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" },
-    heroLeft: { display: "flex", alignItems: "center", gap: 14, minWidth: 0 },
-    avatarWrap: {
-      width: 56,
-      height: 56,
-      borderRadius: 999,
-      overflow: "hidden",
-      border: "1px solid rgba(17,24,39,0.10)",
-      background: "rgba(17,24,39,0.06)",
-      boxShadow: "0 12px 24px rgba(17,24,39,0.10)",
-      display: "grid",
-      placeItems: "center",
-      flex: "0 0 auto",
-    },
-    avatarFallback: {
-      width: "100%",
-      height: "100%",
-      display: "grid",
-      placeItems: "center",
-      fontWeight: 950,
-      color: "#fff",
-      background: `linear-gradient(135deg, ${tt.primary}, ${tt.primary2})`,
-    },
-    heroName: { margin: 0, fontSize: 22, fontWeight: 950, letterSpacing: "-0.3px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-    heroEmail: { marginTop: 4, fontSize: 13, fontWeight: 850, color: "rgba(17,24,39,0.62)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-
-    grid: { marginTop: 14, display: "grid", gridTemplateColumns: "320px 1fr", gap: 14 },
-    sidebar: { ...card, padding: 12, height: "fit-content" },
-
-    sideTitle: { margin: "8px 10px 10px", fontSize: 12, fontWeight: 950, color: "rgba(17,24,39,0.62)", textTransform: "uppercase", letterSpacing: "0.6px" },
-    navItem: (active) => ({
-      width: "100%",
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      padding: "11px 12px",
-      borderRadius: 12,
-      cursor: "pointer",
-      fontWeight: 950,
-      border: active ? "1px solid rgba(47,111,237,0.22)" : "1px solid transparent",
-      background: active ? "rgba(47,111,237,0.10)" : "transparent",
-      color: active ? tt.primary : "rgba(17,24,39,0.84)",
-      textAlign: "left",
-    }),
-    sideActions: { marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(17,24,39,0.08)", display: "grid", gap: 10 },
-
-    content: { display: "grid", gap: 14 },
-
-    card,
-    cardHeader: { padding: "14px 16px", borderBottom: "1px solid rgba(17,24,39,0.08)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 },
-    cardTitle: { fontWeight: 950, color: "#111827" },
-    cardSubtitle: { fontSize: 12, fontWeight: 850, color: "rgba(17,24,39,0.62)" },
-    cardBody: { padding: 16 },
-
-    fieldGrid: { display: "grid", gridTemplateColumns: "190px 1fr", gap: 12, alignItems: "center", padding: "10px 0", borderBottom: "1px solid rgba(17,24,39,0.06)" },
-    label: { color: "rgba(17,24,39,0.70)", fontWeight: 900, fontSize: 13 },
-    valueText: { fontWeight: 950, fontSize: 13, color: "rgba(17,24,39,0.90)", wordBreak: "break-word" },
-
-    input: { width: "min(560px, 100%)", padding: "12px 14px", borderRadius: 12, border: `1px solid ${tt.inputBorder}`, background: tt.inputBg, outline: "none", fontSize: 14, color: tt.text },
-    select: { width: "min(420px, 100%)", padding: "12px 14px", borderRadius: 12, border: `1px solid ${tt.inputBorder}`, background: tt.inputBg, outline: "none", fontSize: 14, color: tt.text, cursor: "pointer" },
-
-    btnRow: { marginTop: 14, display: "flex", gap: 10, flexWrap: "wrap" },
-
-    hintBox: { marginTop: 10, borderRadius: 14, border: "1px solid rgba(47,111,237,0.18)", background: "rgba(47,111,237,0.06)", padding: 12, color: "rgba(17,24,39,0.78)", fontSize: 13, fontWeight: 850, lineHeight: 1.4 },
-
-    errorBox: {
-      borderRadius: 14,
-      border: "1px solid rgba(226,61,61,0.22)",
-      background: "rgba(226,61,61,0.08)",
-      padding: 12,
-      color: "rgba(17,24,39,0.92)",
-      fontWeight: 850,
-      fontSize: 13,
-      display: "flex",
-      alignItems: "flex-start",
-      justifyContent: "space-between",
-      gap: 12,
-    },
-
-    statusRow: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 6 },
-    statusTitle: { fontWeight: 950, color: "rgba(17,24,39,0.92)" },
-    statusSub: { fontSize: 12, fontWeight: 850, color: "rgba(17,24,39,0.62)", marginTop: 2 },
-
-    loading: { minHeight: "60vh", display: "grid", placeItems: "center", color: tt.muted, fontWeight: 950 },
-  };
-}
-
-/* =========================
-   page
+   Main Profile Page
 ========================= */
 export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const navigate = useNavigate();
   const { locale, setLocale, timezone, setTimezone, t } = useLocale();
 
-  const [tab, setTab] = useState("profile"); // profile | preferences | security
+  const [tab, setTab] = useState("profile");
   const [toast, setToast] = useState(null);
 
   const [loading, setLoading] = useState(true);
@@ -495,26 +471,8 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
 
   const showToast = (payload) => setToast(payload);
 
-  const themeTokens = useMemo(
-    () => ({
-      pageBg: "#f6f7fb",
-      text: "#111827",
-      muted: "#6b7280",
-      border: "rgba(17,24,39,0.14)",
-      primary: "#2f6fed",
-      primary2: "#1f5fe2",
-      danger: "#e25555",
-      danger2: "#cf3f3f",
-      inputBorder: "rgba(17,24,39,0.16)",
-      inputBg: "rgba(255,255,255,0.98)",
-    }),
-    []
-  );
-
-  const styles = useMemo(() => S(themeTokens), [themeTokens]);
-
   /* =========================
-     load fresh profile + auth user
+     load profile + auth user
   ========================= */
   useEffect(() => {
     let mounted = true;
@@ -537,10 +495,8 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
         if (!mounted) return;
 
         setDbProfile(p || null);
-
         setUsername(p?.username || "");
         setAvatarUrl(p?.avatar_url || "");
-
         setTheme(p?.theme || "system");
         setEmailNotif(p?.email_notif ?? true);
         setInappNotif(p?.inapp_notif ?? true);
@@ -574,9 +530,6 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     return data?.publicUrl || "";
   }, [avatarUrl]);
 
-  /* =========================
-     "dirty" detection (enterprise UX)
-  ========================= */
   const prefsDirty =
     locale !== (dbProfile?.locale || "en") ||
     timezone !== (dbProfile?.timezone || "Asia/Singapore") ||
@@ -608,7 +561,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const saveUsername = async () => {
     const next = username.trim();
     if (!next) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Invalid username", message: "Username cannot be empty." });
+      showToast({ tone: "warning", icon: "⚠️", title: "Validation Error", message: "Username cannot be empty." });
       return;
     }
 
@@ -620,9 +573,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       await refreshLocalProfile();
       if (typeof onProfileUpdated === "function") onProfileUpdated();
 
-      showToast({ tone: "success", icon: "✅", title: "Saved", message: "Username updated." });
+      showToast({ tone: "success", icon: "✓", title: "Profile Updated", message: "Username saved successfully." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Save failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Update Failed", message: safeErrorMessage(err) });
     } finally {
       setSavingProfile(false);
     }
@@ -646,9 +599,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       await refreshLocalProfile();
       if (typeof onProfileUpdated === "function") onProfileUpdated();
 
-      showToast({ tone: "success", icon: "✅", title: "Saved", message: "Preferences updated." });
+      showToast({ tone: "success", icon: "✓", title: "Preferences Saved", message: "Settings updated successfully." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Save failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Save Failed", message: safeErrorMessage(err) });
     } finally {
       setSavingPrefs(false);
     }
@@ -657,11 +610,11 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const uploadAvatar = async (file) => {
     if (!file) return;
     if (!isImageFile(file)) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Invalid file", message: "Please upload an image file." });
+      showToast({ tone: "warning", icon: "⚠️", title: "Invalid File", message: "Please upload an image file." });
       return;
     }
     if (file.size > 3 * 1024 * 1024) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Too large", message: "Max 3MB. Use a smaller image." });
+      showToast({ tone: "warning", icon: "⚠️", title: "File Too Large", message: "Maximum file size is 3MB." });
       return;
     }
 
@@ -683,9 +636,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       await refreshLocalProfile();
       if (typeof onProfileUpdated === "function") onProfileUpdated();
 
-      showToast({ tone: "success", icon: "🖼️", title: "Updated", message: "Profile picture updated." });
+      showToast({ tone: "success", icon: "✓", title: "Avatar Updated", message: "Profile picture uploaded successfully." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Upload failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Upload Failed", message: safeErrorMessage(err) });
     } finally {
       setAvatarBusy(false);
     }
@@ -704,9 +657,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       await refreshLocalProfile();
       if (typeof onProfileUpdated === "function") onProfileUpdated();
 
-      showToast({ tone: "success", icon: "✅", title: "Removed", message: "Profile picture removed." });
+      showToast({ tone: "success", icon: "✓", title: "Avatar Removed", message: "Profile picture removed." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Operation Failed", message: safeErrorMessage(err) });
     } finally {
       setAvatarBusy(false);
     }
@@ -715,7 +668,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const sendResetPasswordEmail = async () => {
     try {
       if (!email) {
-        showToast({ tone: "danger", icon: "⚠️", title: "No email", message: "Your account email is missing." });
+        showToast({ tone: "warning", icon: "⚠️", title: "No Email", message: "Account email is missing." });
         return;
       }
 
@@ -725,9 +678,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       });
       if (error) throw error;
 
-      showToast({ tone: "success", icon: "📧", title: "Reset sent", message: "Check your email for the reset link." });
+      showToast({ tone: "info", icon: "📧", title: "Reset Email Sent", message: "Check your inbox for password reset link." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Reset failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Request Failed", message: safeErrorMessage(err) });
     } finally {
       setSendingReset(false);
     }
@@ -738,9 +691,9 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       setSignOutOthersBusy(true);
       const { error } = await supabase.auth.signOut({ scope: "others" });
       if (error) throw error;
-      showToast({ tone: "success", icon: "✅", title: "Done", message: "Signed out other devices." });
+      showToast({ tone: "success", icon: "✓", title: "Sessions Terminated", message: "Signed out from other devices." });
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Operation Failed", message: safeErrorMessage(err) });
     } finally {
       setSignOutOthersBusy(false);
     }
@@ -751,10 +704,10 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
       setSignOutAllBusy(true);
       const { error } = await supabase.auth.signOut({ scope: "global" });
       if (error) throw error;
-      showToast({ tone: "success", icon: "✅", title: "Signed out everywhere", message: "Please log in again." });
-      navigate("/");
+      showToast({ tone: "success", icon: "✓", title: "All Sessions Ended", message: "Redirecting to login..." });
+      setTimeout(() => navigate("/"), 1200);
     } catch (err) {
-      showToast({ tone: "danger", icon: "⚠️", title: "Failed", message: safeErrorMessage(err) });
+      showToast({ tone: "danger", icon: "✕", title: "Operation Failed", message: safeErrorMessage(err) });
     } finally {
       setSignOutAllBusy(false);
     }
@@ -764,8 +717,8 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     setConfirm({
       open: true,
       intent: "signout_all",
-      title: "Sign out all devices?",
-      subtitle: "This ends all sessions including this one. You must log in again.",
+      title: "Terminate All Sessions?",
+      subtitle: "This will end all active sessions including this one. You must log in again.",
     });
   };
 
@@ -778,14 +731,327 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     setConfirm({ open: false, intent: "", title: "", subtitle: "" });
   };
 
-  if (loading) return <div style={styles.loading}>Loading profile…</div>;
+  /* =========================
+     Styles
+  ========================= */
+  const styles = {
+    page: {
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
+      color: "#f8fafc",
+      fontFamily: '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      position: "relative",
+      padding: "32px 24px",
+    },
+
+    container: {
+      maxWidth: 1280,
+      margin: "0 auto",
+    },
+
+    topNav: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: 32,
+      gap: 20,
+      flexWrap: "wrap",
+    },
+
+    breadcrumb: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      color: "#94a3b8",
+      fontSize: 13.5,
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.05em",
+    },
+
+    navActions: {
+      display: "flex",
+      gap: 12,
+      flexWrap: "wrap",
+    },
+
+    btn: {
+      padding: "11px 20px",
+      borderRadius: 10,
+      border: "1px solid rgba(148,163,184,0.25)",
+      background: "rgba(255,255,255,0.08)",
+      color: "#f8fafc",
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: 14,
+      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+      backdropFilter: "blur(8px)",
+      fontFamily: '"DM Sans", sans-serif',
+    },
+
+    btnPrimary: {
+      padding: "11px 20px",
+      borderRadius: 10,
+      border: "1px solid rgba(255,255,255,0.2)",
+      background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: 14,
+      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+      boxShadow: "0 4px 16px rgba(59,130,246,0.4)",
+      fontFamily: '"DM Sans", sans-serif',
+    },
+
+    btnDanger: {
+      padding: "11px 20px",
+      borderRadius: 10,
+      border: "1px solid rgba(255,255,255,0.2)",
+      background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: 14,
+      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+      boxShadow: "0 4px 16px rgba(239,68,68,0.4)",
+      fontFamily: '"DM Sans", sans-serif',
+    },
+
+    hero: {
+      background: "linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(15,23,42,0.95) 100%)",
+      border: "1px solid rgba(148,163,184,0.2)",
+      borderRadius: 20,
+      padding: "28px 32px",
+      marginBottom: 32,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 24,
+      flexWrap: "wrap",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.4), 0 0 0 1px rgba(148,163,184,0.1)",
+      backdropFilter: "blur(16px)",
+    },
+
+    avatarSection: {
+      display: "flex",
+      alignItems: "center",
+      gap: 20,
+    },
+
+    avatar: {
+      width: 72,
+      height: 72,
+      borderRadius: 999,
+      overflow: "hidden",
+      border: "2px solid rgba(59,130,246,0.5)",
+      background: "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+      boxShadow: "0 8px 24px rgba(59,130,246,0.35), 0 0 0 4px rgba(59,130,246,0.1)",
+      display: "grid",
+      placeItems: "center",
+      fontSize: 28,
+      fontWeight: 700,
+      color: "#fff",
+    },
+
+    heroText: {
+      flex: 1,
+      minWidth: 0,
+    },
+
+    heroName: {
+      fontSize: 26,
+      fontWeight: 700,
+      letterSpacing: "-0.03em",
+      color: "#f8fafc",
+      margin: 0,
+      marginBottom: 6,
+    },
+
+    heroEmail: {
+      fontSize: 14.5,
+      fontWeight: 500,
+      color: "#94a3b8",
+    },
+
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "280px 1fr",
+      gap: 24,
+      alignItems: "flex-start",
+    },
+
+    sidebar: {
+      background: "rgba(30,41,59,0.6)",
+      border: "1px solid rgba(148,163,184,0.2)",
+      borderRadius: 16,
+      padding: 16,
+      backdropFilter: "blur(16px)",
+      boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+    },
+
+    sideTitle: {
+      fontSize: 11.5,
+      fontWeight: 700,
+      textTransform: "uppercase",
+      letterSpacing: "0.08em",
+      color: "#64748b",
+      margin: "12px 16px 10px",
+    },
+
+    navItem: (active) => ({
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "12px 16px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontWeight: 600,
+      fontSize: 14,
+      border: active ? "1px solid rgba(59,130,246,0.4)" : "1px solid transparent",
+      background: active ? "linear-gradient(135deg, rgba(59,130,246,0.25) 0%, rgba(37,99,235,0.15) 100%)" : "transparent",
+      color: active ? "#93c5fd" : "#cbd5e1",
+      transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+      textAlign: "left",
+      boxShadow: active ? "0 4px 16px rgba(59,130,246,0.2)" : "none",
+    }),
+
+    sideActions: {
+      marginTop: 16,
+      paddingTop: 16,
+      borderTop: "1px solid rgba(148,163,184,0.15)",
+      display: "grid",
+      gap: 10,
+    },
+
+    content: {
+      display: "grid",
+      gap: 24,
+    },
+
+    fieldGrid: {
+      display: "grid",
+      gridTemplateColumns: "200px 1fr",
+      gap: 16,
+      alignItems: "center",
+      padding: "14px 0",
+      borderBottom: "1px solid rgba(226,232,240,0.6)",
+    },
+
+    label: {
+      color: "#475569",
+      fontWeight: 600,
+      fontSize: 13.5,
+    },
+
+    valueText: {
+      fontWeight: 500,
+      fontSize: 14,
+      color: "#1e293b",
+      wordBreak: "break-word",
+    },
+
+    input: {
+      width: "100%",
+      maxWidth: 560,
+      padding: "12px 16px",
+      borderRadius: 10,
+      border: "1px solid rgba(203,213,225,0.8)",
+      background: "#fff",
+      outline: "none",
+      fontSize: 14,
+      fontWeight: 500,
+      color: "#1e293b",
+      transition: "all 0.25s ease",
+      fontFamily: '"DM Sans", sans-serif',
+    },
+
+    select: {
+      width: "100%",
+      maxWidth: 420,
+      padding: "12px 16px",
+      borderRadius: 10,
+      border: "1px solid rgba(203,213,225,0.8)",
+      background: "#fff",
+      outline: "none",
+      fontSize: 14,
+      fontWeight: 500,
+      color: "#1e293b",
+      cursor: "pointer",
+      transition: "all 0.25s ease",
+      fontFamily: '"DM Sans", sans-serif',
+    },
+
+    btnRow: {
+      marginTop: 20,
+      display: "flex",
+      gap: 12,
+      flexWrap: "wrap",
+    },
+
+    infoBox: {
+      marginTop: 16,
+      borderRadius: 12,
+      border: "1px solid rgba(59,130,246,0.25)",
+      background: "linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(37,99,235,0.05) 100%)",
+      padding: 16,
+      color: "#334155",
+      fontSize: 13.5,
+      fontWeight: 500,
+      lineHeight: 1.5,
+    },
+
+    errorBox: {
+      borderRadius: 12,
+      border: "1px solid rgba(239,68,68,0.3)",
+      background: "linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.10) 100%)",
+      padding: 16,
+      color: "#7f1d1d",
+      fontWeight: 600,
+      fontSize: 14,
+      display: "flex",
+      alignItems: "flex-start",
+      justifyContent: "space-between",
+      gap: 16,
+      marginBottom: 24,
+    },
+
+    loading: {
+      minHeight: "70vh",
+      display: "grid",
+      placeItems: "center",
+      color: "#94a3b8",
+      fontWeight: 600,
+      fontSize: 16,
+    },
+  };
+
+  if (loading) return <div style={styles.loading}>Loading your profile...</div>;
 
   return (
     <main style={styles.page}>
-      <style>{`@media (max-width: 980px){ ._profile_grid { grid-template-columns: 1fr !important; } }`}</style>
-
-      <div style={styles.bg} aria-hidden="true" />
-      <div style={styles.bgGrid} aria-hidden="true" />
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+        
+        * { box-sizing: border-box; }
+        
+        button:hover:not(:disabled) {
+          transform: translateY(-1px);
+        }
+        
+        button:active:not(:disabled) {
+          transform: translateY(0);
+        }
+        
+        input:focus, select:focus {
+          border-color: #3b82f6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+        
+        @media (max-width: 980px) {
+          ._profile_grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
@@ -793,116 +1059,228 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
         open={confirm.open}
         title={confirm.title}
         subtitle={confirm.subtitle}
+        danger={true}
         onClose={() => setConfirm({ open: false, intent: "", title: "", subtitle: "" })}
         footer={
           <>
-            <button style={styles.btn} onClick={() => setConfirm({ open: false, intent: "", title: "", subtitle: "" })}>
+            <button
+              style={{
+                ...styles.btn,
+                background: "#fff",
+                color: "#475569",
+                border: "1px solid rgba(203,213,225,0.8)",
+              }}
+              onClick={() => setConfirm({ open: false, intent: "", title: "", subtitle: "" })}
+            >
               Cancel
             </button>
             <button style={styles.btnDanger} onClick={runConfirm} disabled={signOutAllBusy}>
-              {signOutAllBusy ? "Signing out…" : "Sign out all"}
+              {signOutAllBusy ? "Processing..." : "Terminate All Sessions"}
             </button>
           </>
         }
       >
-        <div style={{ color: "rgba(17,24,39,0.78)", fontWeight: 850, fontSize: 13, lineHeight: 1.4 }}>
-          If you suspect compromise, sign out all devices then reset password.
+        <div style={{ color: "#64748b", fontWeight: 500, fontSize: 14, lineHeight: 1.6 }}>
+          If you suspect unauthorized access, sign out all devices immediately and reset your password.
+          This action cannot be undone and will require you to log in again on all devices.
         </div>
       </Modal>
 
-      {/* TOP BAR */}
-      <div style={styles.topbar}>
-        <div style={styles.breadcrumb}>
-          <span>{t("nav.account")}</span>
-          <span style={{ opacity: 0.55 }}>›</span>
-          <span style={{ color: "rgba(17,24,39,0.82)" }}>{t("nav.settings")}</span>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button style={styles.btn} onClick={() => navigate(-1)}>
-            ← {t("nav.back")}
-          </button>
-          <button style={styles.btnDanger} onClick={doLogout} disabled={signingOut}>
-            {signingOut ? "Logging out…" : t("nav.logout")}
-          </button>
-        </div>
-      </div>
-
       <div style={styles.container}>
-        {/* HERO */}
-        <div style={styles.hero}>
-          <div style={styles.heroLeft}>
-            <div style={styles.avatarWrap}>
-              {avatarPublicUrl ? (
-                <img src={avatarPublicUrl} alt="Profile avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-              ) : (
-                <div style={styles.avatarFallback}>{firstLetter}</div>
-              )}
-            </div>
-
-            <div style={{ minWidth: 0 }}>
-              <h1 style={styles.heroName}>{displayName}</h1>
-              <div style={styles.heroEmail}>{email || "—"}</div>
-            </div>
+        {/* TOP NAV */}
+        <div style={styles.topNav}>
+          <div style={styles.breadcrumb}>
+            <span>Account</span>
+            <span style={{ opacity: 0.4 }}>›</span>
+            <span style={{ color: "#cbd5e1" }}>Settings</span>
           </div>
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
-            <Pill tone="brand">KIRO</Pill>
-            <Pill>Supabase Auth</Pill>
+          <div style={styles.navActions}>
+            <button
+              style={styles.btn}
+              onClick={() => navigate(-1)}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+                e.currentTarget.style.borderColor = "rgba(148,163,184,0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                e.currentTarget.style.borderColor = "rgba(148,163,184,0.25)";
+              }}
+            >
+              ← Back
+            </button>
+            <button
+              style={styles.btnDanger}
+              onClick={doLogout}
+              disabled={signingOut}
+              onMouseEnter={(e) => {
+                if (!signingOut) {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(239,68,68,0.5)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 4px 16px rgba(239,68,68,0.4)";
+              }}
+            >
+              {signingOut ? "Logging out..." : "Sign Out"}
+            </button>
           </div>
         </div>
 
-        {/* Error banner */}
+        {/* ERROR BANNER */}
         {pageError && (
-          <div style={{ ...styles.errorBox, marginTop: 12 }}>
+          <div style={styles.errorBox}>
             <div>
-              <div style={{ fontWeight: 950, marginBottom: 4 }}>Something went wrong</div>
+              <div style={{ fontWeight: 700, marginBottom: 6, fontSize: 15 }}>System Error</div>
               <div style={{ opacity: 0.95 }}>{pageError}</div>
             </div>
-            <button style={styles.btn} onClick={() => window.location.reload()}>
+            <button
+              style={{
+                ...styles.btn,
+                background: "#fff",
+                color: "#dc2626",
+                border: "1px solid rgba(220,38,38,0.3)",
+              }}
+              onClick={() => window.location.reload()}
+            >
               Reload
             </button>
           </div>
         )}
 
+        {/* HERO */}
+        <div style={styles.hero}>
+          <div style={styles.avatarSection}>
+            <div style={styles.avatar}>
+              {avatarPublicUrl ? (
+                <img
+                  src={avatarPublicUrl}
+                  alt="Profile"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              ) : (
+                firstLetter
+              )}
+            </div>
+
+            <div style={styles.heroText}>
+              <h1 style={styles.heroName}>{displayName}</h1>
+              <div style={styles.heroEmail}>{email || "—"}</div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <Badge variant="primary">RSAF</Badge>
+            <Badge variant="success">Active</Badge>
+            <Badge>Supabase Auth</Badge>
+          </div>
+        </div>
+
         {/* MAIN GRID */}
         <div className="_profile_grid" style={styles.grid}>
-          {/* LEFT NAV */}
+          {/* SIDEBAR */}
           <aside style={styles.sidebar}>
-            <div style={styles.sideTitle}>{t("nav.settings")}</div>
+            <div style={styles.sideTitle}>Navigation</div>
 
-            <button style={styles.navItem(tab === "profile")} onClick={() => setTab("profile")}>
-              {t("nav.profile")}
+            <button
+              style={styles.navItem(tab === "profile")}
+              onClick={() => setTab("profile")}
+              onMouseEnter={(e) => {
+                if (tab !== "profile") {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (tab !== "profile") {
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+            >
+              Profile
             </button>
 
-            <button style={styles.navItem(tab === "preferences")} onClick={() => setTab("preferences")}>
-              {t("nav.preferences")}
+            <button
+              style={styles.navItem(tab === "preferences")}
+              onClick={() => setTab("preferences")}
+              onMouseEnter={(e) => {
+                if (tab !== "preferences") {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (tab !== "preferences") {
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+            >
+              Preferences
             </button>
 
-            <button style={styles.navItem(tab === "security")} onClick={() => setTab("security")}>
-              {t("nav.security")}
+            <button
+              style={styles.navItem(tab === "security")}
+              onClick={() => setTab("security")}
+              onMouseEnter={(e) => {
+                if (tab !== "security") {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.05)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (tab !== "security") {
+                  e.currentTarget.style.background = "transparent";
+                }
+              }}
+            >
+              Security
             </button>
 
             <div style={styles.sideActions}>
-              <button style={styles.btn} onClick={() => navigate("/organisations")}>
-                {t("nav.workspaces")}
+              <button
+                style={{
+                  ...styles.btn,
+                  fontSize: 13,
+                  padding: "10px 16px",
+                }}
+                onClick={() => navigate("/organisations")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                }}
+              >
+                Workspaces
               </button>
-              <button style={styles.btn} onClick={() => navigate("/kanban")}>
-                {t("nav.kanban")}
+              <button
+                style={{
+                  ...styles.btn,
+                  fontSize: 13,
+                  padding: "10px 16px",
+                }}
+                onClick={() => navigate("/kanban")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+                }}
+              >
+                Kanban Board
               </button>
             </div>
           </aside>
 
-          {/* RIGHT CONTENT */}
+          {/* CONTENT */}
           <div style={styles.content}>
             {/* PROFILE TAB */}
             {tab === "profile" && (
               <>
-                <SectionCard
-                  styles={styles}
-                  title={t("nav.profile")}
-                  subtitle="Your identity shown across the app."
-                  right={<Pill tone={profileDirty ? "neutral" : "success"}>{profileDirty ? "Draft" : "Saved"}</Pill>}
+                <Card
+                  title="Profile Information"
+                  subtitle="Your identity displayed across the system."
+                  actions={<Badge variant={profileDirty ? "warning" : "success"}>{profileDirty ? "Unsaved" : "Saved"}</Badge>}
                 >
                   <div style={styles.fieldGrid}>
                     <div style={styles.label}>User ID</div>
@@ -910,7 +1288,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                   </div>
 
                   <div style={styles.fieldGrid}>
-                    <div style={styles.label}>Email</div>
+                    <div style={styles.label}>Email Address</div>
                     <div style={styles.valueText}>{email || "—"}</div>
                   </div>
 
@@ -921,7 +1299,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         style={styles.input}
-                        placeholder="Enter username"
+                        placeholder="Enter your username"
                         onKeyDown={(e) => e.key === "Enter" && saveUsername()}
                         aria-label="Username"
                       />
@@ -930,35 +1308,74 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
 
                   <div style={styles.btnRow}>
                     <button
-                      style={{ ...styles.btnPrimary, opacity: profileDirty ? 1 : 0.6 }}
+                      style={{
+                        ...styles.btnPrimary,
+                        opacity: profileDirty ? 1 : 0.6,
+                        cursor: profileDirty && !savingProfile ? "pointer" : "not-allowed",
+                      }}
                       onClick={saveUsername}
                       disabled={savingProfile || !profileDirty}
+                      onMouseEnter={(e) => {
+                        if (profileDirty && !savingProfile) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(59,130,246,0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,130,246,0.4)";
+                      }}
                     >
-                      {savingProfile ? "Saving…" : "Save username"}
+                      {savingProfile ? "Saving..." : "Save Username"}
                     </button>
 
                     <button
-                      style={styles.btn}
+                      style={{
+                        ...styles.btn,
+                        background: "#fff",
+                        color: "#475569",
+                        border: "1px solid rgba(203,213,225,0.8)",
+                        cursor: profileDirty && !savingProfile ? "pointer" : "not-allowed",
+                        opacity: profileDirty ? 1 : 0.6,
+                      }}
                       onClick={() => {
                         setUsername(dbProfile?.username || "");
-                        showToast({ tone: "info", icon: "↩️", title: "Reverted", message: "Changes discarded." });
+                        showToast({ tone: "info", icon: "↩", title: "Changes Reverted", message: "Draft discarded." });
                       }}
                       disabled={savingProfile || !profileDirty}
                     >
-                      Cancel
+                      Discard
                     </button>
                   </div>
-                </SectionCard>
+                </Card>
 
-                <SectionCard
-                  styles={styles}
-                  title="Profile picture"
-                  subtitle="Upload a square image (recommended 512×512). Max 3MB."
-                  right={<Pill tone={avatarPublicUrl ? "success" : "neutral"}>{avatarPublicUrl ? "Set" : "Not set"}</Pill>}
+                <Card
+                  title="Profile Picture"
+                  subtitle="Upload a square image (recommended 512×512px, max 3MB)."
+                  actions={<Badge variant={avatarPublicUrl ? "success" : "default"}>{avatarPublicUrl ? "Active" : "Not Set"}</Badge>}
                 >
-                  <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
-                    <label style={{ ...styles.btnPrimary, display: "inline-flex", alignItems: "center", gap: 10, cursor: avatarBusy ? "not-allowed" : "pointer" }}>
-                      {avatarBusy ? "Working…" : "Upload image"}
+                  <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+                    <label
+                      style={{
+                        ...styles.btnPrimary,
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 10,
+                        cursor: avatarBusy ? "not-allowed" : "pointer",
+                        opacity: avatarBusy ? 0.6 : 1,
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!avatarBusy) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(59,130,246,0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,130,246,0.4)";
+                      }}
+                    >
+                      {avatarBusy ? "Uploading..." : "Upload Image"}
                       <input
                         type="file"
                         accept="image/*"
@@ -968,95 +1385,166 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                       />
                     </label>
 
-                    <button style={styles.btn} onClick={removeAvatar} disabled={avatarBusy || !avatarUrl}>
+                    <button
+                      style={{
+                        ...styles.btn,
+                        background: "#fff",
+                        color: "#475569",
+                        border: "1px solid rgba(203,213,225,0.8)",
+                        cursor: !avatarBusy && avatarUrl ? "pointer" : "not-allowed",
+                        opacity: !avatarBusy && avatarUrl ? 1 : 0.6,
+                      }}
+                      onClick={removeAvatar}
+                      disabled={avatarBusy || !avatarUrl}
+                    >
                       Remove
                     </button>
 
-                    <div style={{ color: "rgba(17,24,39,0.62)", fontWeight: 850, fontSize: 13 }}>PNG/JPG recommended.</div>
-                  </div>
-
-                  <div style={styles.hintBox}>
-                    <div style={{ fontWeight: 950, marginBottom: 6 }}>Tip</div>
-                    <div>
-                      Store path in <code>profiles.avatar_url</code> like <code>{user?.id}/avatar.png</code>.
+                    <div style={{ color: "#64748b", fontWeight: 500, fontSize: 13 }}>
+                      PNG, JPG, or WEBP format
                     </div>
                   </div>
-                </SectionCard>
+
+                  <div style={styles.infoBox}>
+                    <div style={{ fontWeight: 700, marginBottom: 8, color: "#1e293b" }}>Storage Information</div>
+                    <div>
+                      Profile pictures are stored securely in Supabase Storage. File path: <code>{user?.id}/avatar.[ext]</code>
+                    </div>
+                  </div>
+                </Card>
               </>
             )}
 
             {/* PREFERENCES TAB */}
             {tab === "preferences" && (
               <>
-                <div style={styles.statusRow}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: -8 }}>
                   <div>
-                    <div style={styles.statusTitle}>{t("nav.preferences")}</div>
-                    <div style={styles.statusSub}>{prefsDirty ? "You have unsaved changes." : "All changes are saved."}</div>
+                    <div style={{ fontWeight: 700, fontSize: 18, color: "#f8fafc", letterSpacing: "-0.02em" }}>
+                      User Preferences
+                    </div>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, color: "#94a3b8", marginTop: 4 }}>
+                      {prefsDirty ? "You have unsaved changes." : "All preferences are saved."}
+                    </div>
                   </div>
-                  <Pill tone={prefsDirty ? "neutral" : "success"}>{prefsDirty ? "Draft" : "Saved"}</Pill>
+                  <Badge variant={prefsDirty ? "warning" : "success"}>{prefsDirty ? "Unsaved" : "Saved"}</Badge>
                 </div>
 
-                <SectionCard
-                  styles={styles}
-                  title={t("prefs.language_region")}
-                  subtitle="Language and timezone settings."
-                  right={<Pill tone="brand">Standard</Pill>}
+                <Card
+                  title="Language & Region"
+                  subtitle="Configure language and timezone settings."
+                  actions={<Badge variant="primary">Standard</Badge>}
                 >
                   <div style={styles.fieldGrid}>
-                    <div style={styles.label}>{t("prefs.language")}</div>
+                    <div style={styles.label}>Language</div>
                     <div>
-                      <select value={locale} onChange={(e) => setLocale(e.target.value)} style={styles.select} aria-label="Language">
+                      <select
+                        value={locale}
+                        onChange={(e) => setLocale(e.target.value)}
+                        style={styles.select}
+                        aria-label="Language"
+                      >
                         <option value="en">English</option>
                         <option value="zh">Chinese (中文)</option>
-                        <option value="ms">Malay</option>
-                        <option value="ta">Tamil</option>
+                        <option value="ms">Malay (Bahasa Melayu)</option>
+                        <option value="ta">Tamil (தமிழ்)</option>
                       </select>
                     </div>
                   </div>
 
                   <div style={{ ...styles.fieldGrid, borderBottom: "none" }}>
-                    <div style={styles.label}>{t("prefs.timezone")}</div>
+                    <div style={styles.label}>Timezone</div>
                     <div>
-                      <select value={timezone} onChange={(e) => setTimezone(e.target.value)} style={styles.select} aria-label="Timezone">
-                        <option value="Asia/Singapore">Asia/Singapore</option>
-                        <option value="Asia/Kuala_Lumpur">Asia/Kuala Lumpur</option>
-                        <option value="Asia/Jakarta">Asia/Jakarta</option>
-                        <option value="Asia/Tokyo">Asia/Tokyo</option>
-                        <option value="UTC">UTC</option>
+                      <select
+                        value={timezone}
+                        onChange={(e) => setTimezone(e.target.value)}
+                        style={styles.select}
+                        aria-label="Timezone"
+                      >
+                        <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
+                        <option value="Asia/Kuala_Lumpur">Asia/Kuala Lumpur (GMT+8)</option>
+                        <option value="Asia/Jakarta">Asia/Jakarta (GMT+7)</option>
+                        <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
+                        <option value="UTC">UTC (GMT+0)</option>
                       </select>
                     </div>
                   </div>
-                </SectionCard>
+                </Card>
 
-                <SectionCard styles={styles} title={t("prefs.appearance")} subtitle="Display and notification preferences." right={<Pill>Policy</Pill>}>
+                <Card
+                  title="Appearance & Notifications"
+                  subtitle="Display preferences and notification settings."
+                  actions={<Badge>System</Badge>}
+                >
                   <div style={styles.fieldGrid}>
-                    <div style={styles.label}>{t("prefs.theme")}</div>
+                    <div style={styles.label}>Theme</div>
                     <div>
-                      <select value={theme} onChange={(e) => setTheme(e.target.value)} style={styles.select} aria-label="Theme">
-                        <option value="system">System</option>
-                        <option value="light">Light</option>
-                        <option value="dark">Dark</option>
+                      <select
+                        value={theme}
+                        onChange={(e) => setTheme(e.target.value)}
+                        style={styles.select}
+                        aria-label="Theme"
+                      >
+                        <option value="system">System Default</option>
+                        <option value="light">Light Mode</option>
+                        <option value="dark">Dark Mode</option>
                       </select>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 10 }}>
-                    <Switch checked={reduceMotion} onChange={setReduceMotion} label="Reduce motion" description="Accessibility setting." />
-                    <Switch checked={inappNotif} onChange={setInappNotif} label="In-app notifications" description="Show alerts inside KIRO." />
-                    <Switch checked={emailNotif} onChange={setEmailNotif} label="Email notifications" description="Receive important account emails." />
+                  <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(226,232,240,0.6)" }}>
+                    <Switch
+                      checked={reduceMotion}
+                      onChange={setReduceMotion}
+                      label="Reduce Motion"
+                      description="Minimize animations for accessibility."
+                    />
+                    <Switch
+                      checked={inappNotif}
+                      onChange={setInappNotif}
+                      label="In-App Notifications"
+                      description="Show alerts and updates within the application."
+                    />
+                    <Switch
+                      checked={emailNotif}
+                      onChange={setEmailNotif}
+                      label="Email Notifications"
+                      description="Receive important account notifications via email."
+                    />
                   </div>
 
                   <div style={styles.btnRow}>
                     <button
-                      style={{ ...styles.btnPrimary, opacity: prefsDirty ? 1 : 0.6 }}
+                      style={{
+                        ...styles.btnPrimary,
+                        opacity: prefsDirty ? 1 : 0.6,
+                        cursor: prefsDirty && !savingPrefs ? "pointer" : "not-allowed",
+                      }}
                       onClick={savePreferences}
                       disabled={savingPrefs || !prefsDirty}
+                      onMouseEnter={(e) => {
+                        if (prefsDirty && !savingPrefs) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(59,130,246,0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,130,246,0.4)";
+                      }}
                     >
-                      {savingPrefs ? "Saving…" : t("prefs.save")}
+                      {savingPrefs ? "Saving..." : "Save Preferences"}
                     </button>
 
                     <button
-                      style={styles.btn}
+                      style={{
+                        ...styles.btn,
+                        background: "#fff",
+                        color: "#475569",
+                        border: "1px solid rgba(203,213,225,0.8)",
+                        cursor: prefsDirty && !savingPrefs ? "pointer" : "not-allowed",
+                        opacity: prefsDirty ? 1 : 0.6,
+                      }}
                       onClick={() => {
                         setLocale(dbProfile?.locale || "en");
                         setTimezone(dbProfile?.timezone || "Asia/Singapore");
@@ -1064,66 +1552,127 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                         setEmailNotif(dbProfile?.email_notif ?? true);
                         setInappNotif(dbProfile?.inapp_notif ?? true);
                         setReduceMotion(dbProfile?.reduce_motion ?? false);
-                        showToast({ tone: "info", icon: "↩️", title: "Reverted", message: "Preferences discarded." });
+                        showToast({ tone: "info", icon: "↩", title: "Changes Discarded", message: "Preferences reset." });
                       }}
                       disabled={savingPrefs || !prefsDirty}
                     >
-                      {t("prefs.discard")}
+                      Discard Changes
                     </button>
                   </div>
 
-                  <div style={styles.hintBox}>
-                    <div style={{ fontWeight: 950, marginBottom: 6 }}>Enterprise tip</div>
-                    <div>Disable “Save” until changes are detected (done), to prevent accidental writes and improve audit clarity.</div>
+                  <div style={styles.infoBox}>
+                    <div style={{ fontWeight: 700, marginBottom: 8, color: "#1e293b" }}>Enterprise Feature</div>
+                    <div>
+                      Save button is disabled until changes are detected to prevent accidental writes and improve audit trail clarity.
+                    </div>
                   </div>
-                </SectionCard>
+                </Card>
               </>
             )}
 
             {/* SECURITY TAB */}
             {tab === "security" && (
               <>
-                <SectionCard styles={styles} title={t("nav.security")} subtitle="Session and access management." right={<Pill tone="success">Live</Pill>}>
+                <Card
+                  title="Session Management"
+                  subtitle="View and control your active sessions."
+                  actions={<Badge variant="success">Active</Badge>}
+                >
                   <div style={styles.fieldGrid}>
-                    <div style={styles.label}>Last login</div>
+                    <div style={styles.label}>Last Login</div>
                     <div style={styles.valueText}>{formatDateMaybe(lastSignIn)}</div>
                   </div>
 
-                  <div style={styles.fieldGrid}>
-                    <div style={styles.label}>Account created</div>
+                  <div style={{ ...styles.fieldGrid, borderBottom: "none" }}>
+                    <div style={styles.label}>Account Created</div>
                     <div style={styles.valueText}>{formatDateMaybe(createdAt)}</div>
                   </div>
 
-                  <div style={{ ...styles.btnRow, marginTop: 10 }}>
-                    <button style={styles.btn} onClick={signOutOtherDevices} disabled={signOutOthersBusy}>
-                      {signOutOthersBusy ? "Working…" : "Sign out other devices"}
+                  <div style={styles.btnRow}>
+                    <button
+                      style={{
+                        ...styles.btn,
+                        background: "#fff",
+                        color: "#475569",
+                        border: "1px solid rgba(203,213,225,0.8)",
+                      }}
+                      onClick={signOutOtherDevices}
+                      disabled={signOutOthersBusy}
+                      onMouseEnter={(e) => {
+                        if (!signOutOthersBusy) {
+                          e.currentTarget.style.background = "#f8fafc";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = "#fff";
+                      }}
+                    >
+                      {signOutOthersBusy ? "Processing..." : "Sign Out Other Devices"}
                     </button>
 
                     <button
-                      style={{ ...styles.btn, borderColor: "rgba(226,61,61,0.22)", background: "rgba(226,61,61,0.10)", color: "rgba(207,63,63,1)" }}
+                      style={{
+                        ...styles.btnDanger,
+                        opacity: signOutAllBusy ? 0.6 : 1,
+                      }}
                       onClick={openConfirmSignoutAll}
                       disabled={signOutAllBusy}
+                      onMouseEnter={(e) => {
+                        if (!signOutAllBusy) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(239,68,68,0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(239,68,68,0.4)";
+                      }}
                     >
-                      Sign out ALL devices
+                      Terminate All Sessions
                     </button>
                   </div>
 
-                  <div style={styles.hintBox}>
-                    <div style={{ fontWeight: 950, marginBottom: 6 }}>Security note</div>
-                    <div>For enterprise use, consider adding audit logs for sign-outs and password resets.</div>
-                  </div>
-                </SectionCard>
-
-                <SectionCard styles={styles} title="Password" subtitle="Reset via secure email flow." right={<Pill tone="brand">Supabase</Pill>}>
-                  <div style={{ display: "grid", gap: 10 }}>
-                    <button style={styles.btnPrimary} onClick={sendResetPasswordEmail} disabled={sendingReset}>
-                      {sendingReset ? "Sending…" : "Send reset email"}
-                    </button>
-                    <div style={{ color: "rgba(17,24,39,0.62)", fontWeight: 850, fontSize: 13 }}>
-                      You’ll receive a reset link in your inbox.
+                  <div style={styles.infoBox}>
+                    <div style={{ fontWeight: 700, marginBottom: 8, color: "#1e293b" }}>Security Advisory</div>
+                    <div>
+                      For enterprise deployments, consider implementing comprehensive audit logs for session management,
+                      sign-out events, and password resets to maintain security compliance.
                     </div>
                   </div>
-                </SectionCard>
+                </Card>
+
+                <Card
+                  title="Password Management"
+                  subtitle="Reset your password via secure email verification."
+                  actions={<Badge variant="primary">Encrypted</Badge>}
+                  variant="danger"
+                >
+                  <div style={{ display: "grid", gap: 16 }}>
+                    <button
+                      style={{
+                        ...styles.btnPrimary,
+                        opacity: sendingReset ? 0.6 : 1,
+                      }}
+                      onClick={sendResetPasswordEmail}
+                      disabled={sendingReset}
+                      onMouseEnter={(e) => {
+                        if (!sendingReset) {
+                          e.currentTarget.style.transform = "translateY(-2px)";
+                          e.currentTarget.style.boxShadow = "0 6px 20px rgba(59,130,246,0.5)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,130,246,0.4)";
+                      }}
+                    >
+                      {sendingReset ? "Sending..." : "Send Password Reset Email"}
+                    </button>
+                    <div style={{ color: "#64748b", fontWeight: 500, fontSize: 13.5, lineHeight: 1.5 }}>
+                      You'll receive a secure password reset link in your registered email inbox. The link expires after 1 hour.
+                    </div>
+                  </div>
+                </Card>
               </>
             )}
           </div>

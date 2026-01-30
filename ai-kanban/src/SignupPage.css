@@ -1,3 +1,8 @@
-/* SignupPage.css */
-/* Reuse the exact same styling as LoginPage */
+/* ========================================
+   SIGNUP PAGE STYLES
+   Imports all styles from LoginPage.css
+======================================== */
+
 @import "./LoginPage.css";
+
+/* Any signup-specific overrides can go here if needed */

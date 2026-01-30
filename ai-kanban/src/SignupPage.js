@@ -1,24 +1,50 @@
-// SignupPage.js
 import React, { useEffect, useState } from "react";
 import "./SignupPage.css";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
-const slides = [
+const features = [
   {
-    img: "/kanban1.svg",
-    title: "Plan with Clarity",
-    desc: "To Do → In Progress → Done, at a glance.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+        />
+      </svg>
+    ),
+    title: "Task Management",
+    desc: "Streamlined workflow with kanban boards and real-time collaboration.",
   },
   {
-    img: "/chat.svg",
-    title: "AI Assist",
-    desc: "Generate subtasks, summaries, and next steps instantly.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+        />
+      </svg>
+    ),
+    title: "AI-Powered Insights",
+    desc: "Intelligent task generation and automated project analysis.",
   },
   {
-    img: "/dashboard.svg",
-    title: "Track Progress",
-    desc: "Stay on top of your work with a clean dashboard view.",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+        />
+      </svg>
+    ),
+    title: "Enterprise Security",
+    desc: "Role-based access control and secure workspace management.",
   },
 ];
 
@@ -30,13 +56,12 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [slideIndex, setSlideIndex] = useState(0);
+  const [currentFeature, setCurrentFeature] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(
-      () => setSlideIndex((prev) => (prev + 1) % slides.length),
-      4500
-    );
+    const interval = setInterval(() => {
+      setCurrentFeature((prev) => (prev + 1) % features.length);
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -44,7 +69,7 @@ export default function SignupPage() {
     e.preventDefault();
 
     if (!email.trim() || !password.trim()) {
-      setError("Please fill in both fields.");
+      setError("Please provide both email and password.");
       return;
     }
 
@@ -56,7 +81,7 @@ export default function SignupPage() {
       if (error) throw error;
 
       alert("Account created! Please verify your email before logging in.");
-      navigate("/"); // back to login page
+      navigate("/");
     } catch (err) {
       setError(err.message || "Signup failed.");
     } finally {
@@ -65,100 +90,353 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="login-page">
-      {/* ✅ same background layer as login */}
-      <div className="login-bg" aria-hidden="true"></div>
+    <div className="auth-page">
+      {/* Animated Background */}
+      <div className="auth-background">
+        <div className="bg-gradient bg-gradient-1"></div>
+        <div className="bg-gradient bg-gradient-2"></div>
+        <div className="bg-gradient bg-gradient-3"></div>
+        <div className="bg-grid"></div>
+      </div>
 
-      <div className="login-card">
-        {/* LEFT */}
-        <div className="login-left">
-          <div className="login-brand">
-            <span className="login-logo">KIRO</span>
-            <span className="login-badge">AI Kanban</span>
-          </div>
-
-          <h1 className="login-title">Create account</h1>
-          <p className="login-subtitle">Start your workspace in seconds</p>
-
-          <form onSubmit={handleSignup} className="login-form">
-            <label className="login-label">
-              <span>Email</span>
-              <input
-                type="email"
-                className="login-input"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </label>
-
-            <label className="login-label">
-              <span>Password</span>
-              <div className="login-password">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  className="login-input"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <button
-                  type="button"
-                  className="login-toggle"
-                  onClick={() => setShowPassword((v) => !v)}
-                >
-                  {showPassword ? "Hide" : "Show"}
-                </button>
+      {/* Main Container */}
+      <div className="auth-container">
+        {/* Left Panel - Branding & Features */}
+        <div className="auth-left">
+          <div className="brand-section">
+            <div className="brand-header">
+              <div className="brand-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  />
+                </svg>
               </div>
-            </label>
-
-            {error && <div className="login-error">{error}</div>}
-
-            <button className="login-primary" type="submit" disabled={loading}>
-              {loading ? "Creating..." : "Sign Up"}
-            </button>
-
-            <div className="login-divider">
-              <span />
-              <p>or</p>
-              <span />
+              <div className="brand-text">
+                <h1 className="brand-title">KIRO</h1>
+                <p className="brand-subtitle">Workspace Management System</p>
+              </div>
             </div>
 
-            <Link to="/" className="login-outline">
-              Back to Login
-            </Link>
+            <div className="brand-tagline">
+              <h2>Join Your Organization's Workspace</h2>
+              <p>
+                Create your account to collaborate with your team in a secure,
+                enterprise-grade project management environment.
+              </p>
+            </div>
+          </div>
 
-            <p className="login-footnote">
-              Tip: Use AI to auto-split big tasks into smaller ones.
-            </p>
-          </form>
-        </div>
+          {/* Feature Showcase */}
+          <div className="features-showcase">
+            <div className="features-carousel">
+              {features.map((feature, index) => (
+                <div
+                  key={index}
+                  className={`feature-card ${
+                    index === currentFeature ? "active" : ""
+                  }`}
+                >
+                  <div className="feature-icon">{feature.icon}</div>
+                  <div className="feature-content">
+                    <h3 className="feature-title">{feature.title}</h3>
+                    <p className="feature-desc">{feature.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
 
-        {/* RIGHT */}
-        <div className="login-right">
-          <div className="right-inner">
-            {slides.map((s, i) => (
-              <div
-                key={i}
-                className={`right-slide ${i === slideIndex ? "active" : ""}`}
-              >
-                <img src={s.img} alt={s.title} />
-                <h2>{s.title}</h2>
-                <p>{s.desc}</p>
-              </div>
-            ))}
-
-            <div className="right-dots">
-              {slides.map((_, i) => (
-                <span
-                  key={i}
-                  className={`right-dot ${i === slideIndex ? "active" : ""}`}
+            <div className="feature-indicators">
+              {features.map((_, index) => (
+                <button
+                  key={index}
+                  className={`indicator ${
+                    index === currentFeature ? "active" : ""
+                  }`}
+                  onClick={() => setCurrentFeature(index)}
+                  aria-label={`View feature ${index + 1}`}
                 />
               ))}
             </div>
           </div>
+
+          {/* Stats */}
+          <div className="stats-bar">
+            <div className="stat-item">
+              <div className="stat-icon">🔐</div>
+              <div className="stat-content">
+                <div className="stat-value">Enterprise</div>
+                <div className="stat-label">Security</div>
+              </div>
+            </div>
+            <div className="stat-divider"></div>
+            <div className="stat-item">
+              <div className="stat-icon">⚡</div>
+              <div className="stat-content">
+                <div className="stat-value">Real-time</div>
+                <div className="stat-label">Sync</div>
+              </div>
+            </div>
+            <div className="stat-divider"></div>
+            <div className="stat-item">
+              <div className="stat-icon">🤖</div>
+              <div className="stat-content">
+                <div className="stat-value">AI-Powered</div>
+                <div className="stat-label">Automation</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Panel - Signup Form */}
+        <div className="auth-right">
+          <div className="auth-form-container">
+            {/* Security Badge */}
+            <div className="security-badge">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                width="14"
+                height="14"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              Account Registration Portal
+            </div>
+
+            <div className="form-header">
+              <h2 className="form-title">Create Account</h2>
+              <p className="form-subtitle">
+                Register to access your organization's workspace and
+                collaboration tools
+              </p>
+            </div>
+
+            <form onSubmit={handleSignup} className="auth-form">
+              <div className="form-group">
+                <label className="form-label">
+                  <span className="label-text">Email Address</span>
+                  <span className="label-required">*</span>
+                </label>
+                <div className="input-wrapper">
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="user@organization.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">
+                  <span className="label-text">Password</span>
+                  <span className="label-required">*</span>
+                </label>
+                <div className="input-wrapper">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="form-input"
+                    placeholder="Create a secure password (min. 6 characters)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="new-password"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle"
+                    onClick={() => setShowPassword((v) => !v)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
+                      </svg>
+                    ) : (
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {error && (
+                <div className="form-error">
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    width="18"
+                    height="18"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn-submit"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="btn-spinner"></span>
+                    Creating Account...
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      width="18"
+                      height="18"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                      />
+                    </svg>
+                    Register Account
+                  </>
+                )}
+              </button>
+
+              <div className="form-divider">
+                <span className="divider-line"></span>
+                <span className="divider-text">Already Registered?</span>
+                <span className="divider-line"></span>
+              </div>
+
+              <Link to="/" className="btn-secondary">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  width="18"
+                  height="18"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                  />
+                </svg>
+                Back to Login
+              </Link>
+            </form>
+
+            {/* Footer */}
+            <div className="form-footer">
+              <div className="footer-links">
+                <a href="#" className="footer-link">
+                  Privacy Policy
+                </a>
+                <span className="footer-separator">•</span>
+                <a href="#" className="footer-link">
+                  Terms of Service
+                </a>
+                <span className="footer-separator">•</span>
+                <a href="#" className="footer-link">
+                  Help Center
+                </a>
+              </div>
+              <p className="footer-copyright">
+                © 2026 KIRO Workspace Management. All rights reserved.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Status Bar */}
+      <div className="status-bar">
+        <div className="status-item">
+          <span className="status-indicator status-active"></span>
+          <span className="status-text">All Systems Operational</span>
+        </div>
+        <div className="status-item">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            width="14"
+            height="14"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+            />
+          </svg>
+          <span className="status-text">256-bit Encryption</span>
+        </div>
+        <div className="status-item">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            width="14"
+            height="14"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+            />
+          </svg>
+          <span className="status-text">ISO 27001 Certified</span>
         </div>
       </div>
     </div>
