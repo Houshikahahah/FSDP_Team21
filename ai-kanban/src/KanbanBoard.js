@@ -1,7 +1,7 @@
 import "./KanbanBoard.css";
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import Lottie from "lottie-react";
 import boardAnim from "./assets/lottie/board.json";
@@ -11,7 +11,6 @@ import queuedAnim from "./assets/lottie/queued.json";
 
 
 function KanbanBoard({ socket, user, profile }) {
-  const navigate = useNavigate();
 
   const { id: orgId } = useParams();
   const uid = user?.id;
@@ -109,12 +108,6 @@ function KanbanBoard({ socket, user, profile }) {
     const d = new Date(dateStr);
     if (Number.isNaN(d.getTime())) return "";
     return d.toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
-  };
-
-  const priorityLabel = (p) => {
-    const v = String(p || "").toLowerCase();
-    if (!v) return "—";
-    return v.charAt(0).toUpperCase() + v.slice(1);
   };
 
   const typeLabel = (t) => {
@@ -409,18 +402,7 @@ function KanbanBoard({ socket, user, profile }) {
     const updated = tasks.find((t) => t.id === selectedDoneTask.id);
     if (updated) setSelectedDoneTask(updated);
   }, [tasks, selectedDoneTask]);
-  const jumpToTask = (taskId) => {
-    const el = taskRefs.current[taskId];
-    if (!el) return;
 
-    el.scrollIntoView({ behavior: "smooth", block: "center" });
-
-    el.classList.add("task-flash");
-    setTimeout(() => el.classList.remove("task-flash"), 900);
-
-    setSearchOpen(false);
-    setSearchTerm(""); // ✅ add this line
-  };
 
   useEffect(() => {
     if (!searchOpen) return;
