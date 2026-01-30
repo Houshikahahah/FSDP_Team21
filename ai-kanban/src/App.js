@@ -61,30 +61,33 @@ export default function App() {
   }, []);
 
   // ✅ SOCKET AFTER USER EXISTS
-  useEffect(() => {
-    if (!user?.id) {
-      setSocket((prev) => {
-        if (prev) prev.disconnect();
-        return null;
-      });
-      return;
-    }
-
-    const s = io("http://localhost:5000", {
-      transports: ["polling", "websocket"],
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 500,
-      timeout: 8000,
-      query: { userId: user.id },
+useEffect(() => {
+  if (!user?.id) {
+    setSocket((prev) => {
+      if (prev) prev.disconnect();
+      return null;
     });
+    return;
+  }
 
-    setSocket(s);
+  const SERVER_URL =
+    process.env.REACT_APP_SERVER_URL || "http://localhost:5000";
 
-    return () => {
-      s.disconnect();
-    };
-  }, [user?.id]);
+  const s = io(SERVER_URL, {
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: 10,
+    reconnectionDelay: 500,
+    timeout: 8000,
+    query: { userId: user.id },
+    withCredentials: true,
+  });
+
+  setSocket(s);
+
+  return () => s.disconnect();
+}, [user?.id]);
+
 
   // ✅ Auto-refresh profile
   useEffect(() => {
@@ -117,7 +120,6 @@ export default function App() {
         <Routes>
           {/* LOGIN */}
           <Route path="/" element={!user ? <LoginPage /> : <Navigate to="/home" />} />
-<Route path="/signup" element={!user ? <SignupPage /> : <Navigate to="/home" />} />
 
 
           {/* SIGNUP */}
