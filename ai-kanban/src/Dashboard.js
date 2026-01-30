@@ -226,6 +226,7 @@ export default function Dashboard({ user, profile }) {
   // ----- KPI metrics (based on filteredTasks) -----
   const metrics = useMemo(() => {
     const total = filteredTasks.length;
+    const todo = filteredTasks.filter((t) => t.status === STATUS_TODO).length;
     const inProgress = filteredTasks.filter((t) => t.status === STATUS_PROGRESS).length;
     const completed = filteredTasks.filter((t) => t.status === STATUS_DONE).length;
 
@@ -239,7 +240,7 @@ export default function Dashboard({ user, profile }) {
       return end < today && t.status !== STATUS_DONE;
     }).length;
 
-    return { total, inProgress, completed, overdue };
+    return { total, todo, inProgress, completed, overdue };
   }, [filteredTasks]);
 
   // ----- Agents panel (based on filteredTasks) -----
@@ -270,7 +271,7 @@ export default function Dashboard({ user, profile }) {
           : current?.status === STATUS_PROGRESS
           ? "Active"
           : current?.status === STATUS_DONE
-          ? "Completed"
+          ? "Done"
           : "Idle";
 
       const progress =
@@ -332,7 +333,7 @@ export default function Dashboard({ user, profile }) {
 
     return recent.map((t) => {
       if (t.ai_status === "thinking") return `AI is working on: ${t.title}`;
-      if (t.status === STATUS_DONE) return `Task completed: ${t.title}`;
+      if (t.status === STATUS_DONE) return `Task done: ${t.title}`;
       if (t.status === STATUS_PROGRESS) return `In progress: ${t.title}`;
       return `Task updated: ${t.title}`;
     });
@@ -385,6 +386,13 @@ export default function Dashboard({ user, profile }) {
           <span className="stat-sub">All tasks in the system</span>
         </div>
 
+        {/* ✅ NEW: To Do KPI card (inserted before In Progress) */}
+        <div className="stats-card">
+          <h4>To Do</h4>
+          <p>{metrics.todo}</p>
+          <span className="stat-sub">Not started yet</span>
+        </div>
+
         <div className="stats-card">
           <h4>In Progress</h4>
           <p>{metrics.inProgress}</p>
@@ -392,7 +400,7 @@ export default function Dashboard({ user, profile }) {
         </div>
 
         <div className="stats-card">
-          <h4>Completed</h4>
+          <h4>Done</h4>
           <p>{metrics.completed}</p>
           <span className="stat-sub">Successfully finished</span>
         </div>
