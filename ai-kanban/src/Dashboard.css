@@ -596,3 +596,10 @@
 .page-title{
   margin-top: 8px;   /* try 4–6px */
 }
+/* ===== KPI ROW — FORCE 5 CARDS IN ONE ROW ===== */
+.stats-row{
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+}
+.stats-card{
+  padding: 20px !important;
+}
