@@ -119,7 +119,8 @@ useEffect(() => {
       <LocaleProvider profile={profile}>
         <Routes>
           {/* LOGIN */}
-          <Route path="/" element={!user ? <LoginPage /> : <Navigate to="/home" />} />
+          <Route path="/" element={!user ? <LoginPage /> : <Navigate to="/organisations" />} />
+
 
 
           {/* SIGNUP */}
@@ -139,13 +140,14 @@ useEffect(() => {
                 activeOrgId ? (
                   <Navigate to={`/org/${activeOrgId}/kanban`} />
                 ) : (
-                  <Navigate to="/kanban" />
+                  <Navigate to="/organisations" />
                 )
               ) : (
                 <Navigate to="/" />
               )
             }
           />
+
 
 
           {/* Organisations */}
