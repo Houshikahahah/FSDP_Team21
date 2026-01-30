@@ -46,7 +46,7 @@ function Badge({ variant = "neutral", icon, children }) {
   if (variant === "warning") cls.push("badge-warning");
   if (variant === "danger") cls.push("badge-danger");
   if (variant === "info") cls.push("badge-info");
-  
+
   return (
     <span className={cls.join(" ")}>
       {icon && <span className="badge-icon">{icon}</span>}
@@ -186,7 +186,6 @@ export default function OrganisationDashboard({ user, profile }) {
   const copyPin = async (pin) => {
     try {
       await navigator.clipboard.writeText(pin);
-      // Could add toast notification here
     } catch {
       // ignore
     }
@@ -234,7 +233,9 @@ export default function OrganisationDashboard({ user, profile }) {
       <div className="enterprise-page">
         <div className="loading-container">
           <div className="loading-spinner"></div>
-          <div className="loading-text">Loading Workspace Management System...</div>
+          <div className="loading-text">
+            Loading Workspace Management System...
+          </div>
         </div>
       </div>
     );
@@ -242,7 +243,6 @@ export default function OrganisationDashboard({ user, profile }) {
 
   return (
     <div className="enterprise-page">
-      {/* Top Navigation Bar */}
       <nav className="top-nav">
         <div className="nav-left">
           <div className="logo-section">
@@ -264,27 +264,9 @@ export default function OrganisationDashboard({ user, profile }) {
         </div>
 
         <div className="nav-right">
-          <button className="nav-btn" onClick={() => navigate("/kanban")}>
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              width="18"
-              height="18"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-              />
-            </svg>
-            Kanban Board
+          <button className="nav-btn" onClick={() => navigate("/chat")}>
+            Chat
           </button>
-
-            <button className="nav-btn" onClick={() => navigate("/chat")}>
-              Chat
-            </button>
 
           <button className="nav-btn nav-btn-secondary" onClick={logout}>
             <svg
@@ -315,7 +297,6 @@ export default function OrganisationDashboard({ user, profile }) {
       </nav>
 
       <div className="enterprise-container">
-        {/* Header Section */}
         <header className="page-header">
           <div className="header-content">
             <div className="breadcrumb">
@@ -323,9 +304,7 @@ export default function OrganisationDashboard({ user, profile }) {
               <span className="breadcrumb-separator">›</span>
               <span className="breadcrumb-item">Account Management</span>
               <span className="breadcrumb-separator">›</span>
-              <span className="breadcrumb-item breadcrumb-active">
-                Workspaces
-              </span>
+              <span className="breadcrumb-item breadcrumb-active">Workspaces</span>
             </div>
 
             <h1 className="page-title">Workspace Overview</h1>
@@ -341,7 +320,6 @@ export default function OrganisationDashboard({ user, profile }) {
           </div>
         </header>
 
-        {/* Stats Dashboard */}
         <div className="stats-grid">
           <StatsCard
             icon="📊"
@@ -369,7 +347,6 @@ export default function OrganisationDashboard({ user, profile }) {
           />
         </div>
 
-        {/* Error Display */}
         {pageError && (
           <div className="alert alert-error">
             <div className="alert-icon">⚠</div>
@@ -383,17 +360,12 @@ export default function OrganisationDashboard({ user, profile }) {
           </div>
         )}
 
-        {/* Action Panels */}
         <div className="action-grid">
           <section className="action-panel">
             <div className="panel-header">
               <div className="panel-header-left">
                 <div className="panel-icon">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -477,11 +449,7 @@ export default function OrganisationDashboard({ user, profile }) {
             <div className="panel-header">
               <div className="panel-header-left">
                 <div className="panel-icon panel-icon-secondary">
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                  >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -578,7 +546,6 @@ export default function OrganisationDashboard({ user, profile }) {
           </section>
         </div>
 
-        {/* Workspace List Controls */}
         <div className="list-controls">
           <div className="list-controls-left">
             <h2 className="section-title">Workspace Directory</h2>
@@ -652,7 +619,6 @@ export default function OrganisationDashboard({ user, profile }) {
           </div>
         </div>
 
-        {/* Workspace Cards */}
         {filteredAndSorted.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">
@@ -879,7 +845,10 @@ export default function OrganisationDashboard({ user, profile }) {
                               return;
 
                             try {
-                              setBusy((b) => ({ ...b, leavingOrgId: org.id }));
+                              setBusy((b) => ({
+                                ...b,
+                                leavingOrgId: org.id,
+                              }));
                               const { error } = await leaveOrganisation(
                                 org.id,
                                 user.id
@@ -946,9 +915,7 @@ export default function OrganisationDashboard({ user, profile }) {
                       <div className="members-list">
                         <div className="members-header">
                           <h4 className="members-title">Workspace Members</h4>
-                          <Badge variant="neutral">
-                            {orgMembers.length} Total
-                          </Badge>
+                          <Badge variant="neutral">{orgMembers.length} Total</Badge>
                         </div>
 
                         <div className="members-grid">
@@ -968,18 +935,14 @@ export default function OrganisationDashboard({ user, profile }) {
                               <div key={m.user_id} className="member-card">
                                 <div className="member-avatar">{initials}</div>
                                 <div className="member-info">
-                                  <div className="member-name">
-                                    {displayName}
-                                  </div>
+                                  <div className="member-name">{displayName}</div>
                                   <div className="member-role">
                                     {isOwnerRow ? (
                                       <Badge variant="primary" icon="👑">
                                         Administrator
                                       </Badge>
                                     ) : (
-                                      <Badge variant="neutral">
-                                        Member
-                                      </Badge>
+                                      <Badge variant="neutral">Member</Badge>
                                     )}
                                   </div>
                                 </div>
@@ -997,7 +960,6 @@ export default function OrganisationDashboard({ user, profile }) {
         )}
       </div>
 
-      {/* Footer */}
       <footer className="page-footer">
         <div className="footer-content">
           <div className="footer-left">

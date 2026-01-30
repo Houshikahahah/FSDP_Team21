@@ -91,7 +91,8 @@ export async function getMembers(orgId) {
 
 /* =========================
    CREATE org
-   IMPORTANT: your organisation_members table has owner_id (NOT NULL)
+   IMPORTANT: organisation_members has owner_id (NOT NULL)
+   FIX: use upsert so it won't fail if membership row already exists
 ========================= */
 export async function createOrganisation(name, ownerId) {
   try {
@@ -108,15 +109,20 @@ export async function createOrganisation(name, ownerId) {
 
     if (orgRes.error) throw orgRes.error;
 
-    // ✅ insert membership with owner_id filled
-    const memRes = await supabase.from("organisation_members").insert([
-      {
-        organisation_id: orgRes.data.id,
-        user_id: ownerId,
-        owner_id: ownerId,
-        role: "owner",
-      },
-    ]);
+    // ✅ idempotent membership insert (no duplicate crash)
+    const memRes = await supabase
+      .from("organisation_members")
+      .upsert(
+        [
+          {
+            organisation_id: orgRes.data.id,
+            user_id: ownerId,
+            owner_id: ownerId,
+            role: "owner",
+          },
+        ],
+        { onConflict: "organisation_id,user_id" }
+      );
 
     if (memRes.error) throw memRes.error;
 
@@ -129,13 +135,15 @@ export async function createOrganisation(name, ownerId) {
 /* =========================
    JOIN org by (name + pin)
    IMPORTANT: owner_id NOT NULL in organisation_members
+   FIX: use upsert so clicking twice / realtime refresh won't error
 ========================= */
 export async function joinOrganisation(name, pin, userId) {
   try {
     const orgName = normName(name);
     const orgPin = normName(pin);
 
-    if (!orgName || !orgPin) throw new Error("Workspace name and PIN are required.");
+    if (!orgName || !orgPin)
+      throw new Error("Workspace name and PIN are required.");
 
     const orgRes = await supabase
       .from("organisations")
@@ -146,14 +154,19 @@ export async function joinOrganisation(name, pin, userId) {
 
     if (orgRes.error) throw orgRes.error;
 
-    const memRes = await supabase.from("organisation_members").insert([
-      {
-        organisation_id: orgRes.data.id,
-        user_id: userId,
-        owner_id: orgRes.data.owner_id, // ✅ required
-        role: "developer", // keep your existing roles style
-      },
-    ]);
+    const memRes = await supabase
+      .from("organisation_members")
+      .upsert(
+        [
+          {
+            organisation_id: orgRes.data.id,
+            user_id: userId,
+            owner_id: orgRes.data.owner_id, // ✅ required by your schema
+            role: "developer",
+          },
+        ],
+        { onConflict: "organisation_id,user_id" }
+      );
 
     if (memRes.error) throw memRes.error;
 

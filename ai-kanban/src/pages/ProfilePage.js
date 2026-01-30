@@ -51,7 +51,6 @@ async function copyText(text) {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // fallback
     try {
       const el = document.createElement("textarea");
       el.value = text;
@@ -83,7 +82,7 @@ function Toast({ toast, onClose, reduceMotion }) {
     neutral: { bg: "rgba(255,255,255,0.96)", border: "rgba(15,23,42,0.08)", text: "#0f172a" },
     success: { bg: "rgba(16,185,129,0.95)", border: "rgba(255,255,255,0.25)", text: "#fff" },
     danger: { bg: "rgba(239,68,68,0.95)", border: "rgba(255,255,255,0.25)", text: "#fff" },
-    info: { bg: "rgba(106,61,240,0.95)", border: "rgba(255,255,255,0.25)", text: "#fff" }, // purple hint
+    info: { bg: "rgba(106,61,240,0.95)", border: "rgba(255,255,255,0.25)", text: "#fff" },
     warning: { bg: "rgba(245,158,11,0.95)", border: "rgba(255,255,255,0.25)", text: "#fff" },
   };
 
@@ -218,8 +217,10 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const [signingOut, setSigningOut] = useState(false);
 
   const [sendingReset, setSendingReset] = useState(false);
-  const [signOutOthersBusy, setSignOutOthersBusy] = useState(false);
   const [signOutAllBusy, setSignOutAllBusy] = useState(false);
+
+  // ✅ NEW: delete account busy
+  const [deletingAccountBusy, setDeletingAccountBusy] = useState(false);
 
   const [confirm, setConfirm] = useState({ open: false, intent: "", title: "", subtitle: "" });
 
@@ -290,7 +291,6 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     };
   }, [user?.id, user?.email]);
 
-  // Optional: make reduce motion actually affect page animations
   useEffect(() => {
     const root = document.documentElement;
     if (reduceMotion) root.classList.add("_reduceMotion");
@@ -466,19 +466,6 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     }
   };
 
-  const signOutOtherDevices = async () => {
-    try {
-      setSignOutOthersBusy(true);
-      const { error } = await supabase.auth.signOut({ scope: "others" });
-      if (error) throw error;
-      showToast({ tone: "success", icon: "✓", title: "Sessions Terminated", message: "Signed out from other devices." });
-    } catch (err) {
-      showToast({ tone: "danger", icon: "✕", title: "Operation Failed", message: safeErrorMessage(err) });
-    } finally {
-      setSignOutOthersBusy(false);
-    }
-  };
-
   const signOutAllDevices = async () => {
     try {
       setSignOutAllBusy(true);
@@ -493,6 +480,39 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     }
   };
 
+  // ✅ NEW: delete account (calls Edge Function)
+  const deleteAccount = async () => {
+    try {
+      setDeletingAccountBusy(true);
+
+      // Edge function should:
+      // 1) verify user from Authorization JWT
+      // 2) delete related rows (profiles, memberships, etc.)
+      // 3) admin.deleteUser(user.id)
+      const { data, error } = await supabase.functions.invoke("delete-account", {
+        body: {}, // nothing needed, function reads user from JWT
+      });
+
+      if (error) throw error;
+
+      showToast({
+        tone: "success",
+        icon: "✓",
+        title: "Account Deleted",
+        message: "Your account was deleted successfully. Redirecting...",
+      });
+
+      // Ensure local session is cleared
+      await supabase.auth.signOut();
+      setTimeout(() => navigate("/"), 900);
+      return data;
+    } catch (err) {
+      showToast({ tone: "danger", icon: "✕", title: "Delete Failed", message: safeErrorMessage(err) });
+    } finally {
+      setDeletingAccountBusy(false);
+    }
+  };
+
   const openConfirmSignoutAll = () => {
     setConfirm({
       open: true,
@@ -502,13 +522,29 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
     });
   };
 
+  // ✅ NEW confirm opener for delete account
+  const openConfirmDeleteAccount = () => {
+    setConfirm({
+      open: true,
+      intent: "delete_account",
+      title: "Delete Account Permanently?",
+      subtitle: "This will permanently delete your account and related data. This cannot be undone.",
+    });
+  };
+
   const runConfirm = async () => {
-    if (confirm.intent === "signout_all") {
-      setConfirm({ open: false, intent: "", title: "", subtitle: "" });
+    const intent = confirm.intent;
+    setConfirm({ open: false, intent: "", title: "", subtitle: "" });
+
+    if (intent === "signout_all") {
       await signOutAllDevices();
       return;
     }
-    setConfirm({ open: false, intent: "", title: "", subtitle: "" });
+
+    if (intent === "delete_account") {
+      await deleteAccount();
+      return;
+    }
   };
 
   const discardPrefs = () => {
@@ -532,7 +568,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
   const styles = {
     page: {
       minHeight: "100vh",
-      background: "#f5f5f7", // ✅ Kanban-like background
+      background: "#f5f5f7",
       color: "#0f172a",
       fontFamily: '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       position: "relative",
@@ -584,16 +620,34 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
             <Button variant="outline" onClick={() => setConfirm({ open: false, intent: "", title: "", subtitle: "" })}>
               Cancel
             </Button>
-            <Button variant="danger" onClick={runConfirm} disabled={signOutAllBusy}>
-              {signOutAllBusy ? "Processing..." : "Terminate All Sessions"}
-            </Button>
+
+            {confirm.intent === "signout_all" && (
+              <Button variant="danger" onClick={runConfirm} disabled={signOutAllBusy}>
+                {signOutAllBusy ? "Processing..." : "Terminate All Sessions"}
+              </Button>
+            )}
+
+            {confirm.intent === "delete_account" && (
+              <Button variant="danger" onClick={runConfirm} disabled={deletingAccountBusy}>
+                {deletingAccountBusy ? "Deleting..." : "Delete Account"}
+              </Button>
+            )}
           </>
         }
       >
-        <div className="_muted">
-          If you suspect unauthorized access, sign out all devices immediately and reset your password.
-          This action cannot be undone and will require you to log in again on all devices.
-        </div>
+        {confirm.intent === "signout_all" && (
+          <div className="_muted">
+            If you suspect unauthorized access, sign out all devices immediately and reset your password.
+            This action cannot be undone and will require you to log in again on all devices.
+          </div>
+        )}
+
+        {confirm.intent === "delete_account" && (
+          <div className="_muted">
+            This will permanently delete your account and related data (profile, memberships, etc.).
+            If you are unsure, cancel and use “Terminate All Sessions” instead.
+          </div>
+        )}
       </Modal>
 
       <div style={styles.container}>
@@ -687,7 +741,6 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
 
           {/* CONTENT */}
           <div className="_content">
-            {/* sticky unsaved bar */}
             {(profileDirty || prefsDirty) && (
               <div className="_stickyBar">
                 <div className="_stickyText">
@@ -855,7 +908,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                     <div>
                       <select value={timezone} onChange={(e) => setTimezone(e.target.value)} className="_select" aria-label="Timezone">
                         <option value="Asia/Singapore">Asia/Singapore (GMT+8)</option>
-                        <option value="Asia/Kuala_Lumpur">Asia/Kuala Lumpur (GMT+8)</option>
+                        <option value="Asia/Kuala_Lumpur">Asia/Kuala_Lumpur (GMT+8)</option>
                         <option value="Asia/Jakarta">Asia/Jakarta (GMT+7)</option>
                         <option value="Asia/Tokyo">Asia/Tokyo (GMT+9)</option>
                         <option value="UTC">UTC (GMT+0)</option>
@@ -931,9 +984,11 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                   </div>
 
                   <div className="_btnRow">
-                    <Button variant="outline" onClick={signOutOtherDevices} disabled={signOutOthersBusy}>
-                      {signOutOthersBusy ? "Processing..." : "Sign Out Other Devices"}
+                    {/* ✅ REPLACED: Sign Out Other Devices -> Delete Account */}
+                    <Button variant="danger" onClick={openConfirmDeleteAccount} disabled={deletingAccountBusy}>
+                      {deletingAccountBusy ? "Deleting..." : "Delete Account"}
                     </Button>
+
                     <Button variant="danger" onClick={openConfirmSignoutAll} disabled={signOutAllBusy}>
                       Terminate All Sessions
                     </Button>
@@ -942,7 +997,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
                   <div className="_infoBox">
                     <div className="_infoTitle">Security Advisory</div>
                     <div>
-                      For production: add audit logs for sign-out events + reset requests to improve traceability.
+                      For production: add audit logs for sign-out events + delete requests to improve traceability.
                     </div>
                   </div>
                 </Card>
@@ -970,8 +1025,7 @@ export default function ProfilePage({ user, profile, onProfileUpdated }) {
 }
 
 /* =========================
-   Styles (single place, no inline hover hacks)
-   ✅ colours adjusted to match Kanban (light + purple hint)
+   Styles (unchanged)
 ========================= */
 function StyleSheet() {
   return (
@@ -987,7 +1041,6 @@ function StyleSheet() {
         --text: #0f172a;
         --border: #e2e2e2;
 
-        /* Kanban purple hint */
         --p: #6a3df0;
         --p2:#7b5cff;
         --lav: #ebe7ff;
@@ -1261,7 +1314,6 @@ function StyleSheet() {
       ._muted{ color:#6b7280; font-weight: 650; font-size: 13px; line-height: 1.5; }
       code{ background: rgba(17,24,39,0.06); padding: 2px 6px; border-radius: 8px; }
 
-      /* Switch */
       ._switchRow{
         display:flex; justify-content:space-between; gap: 14px; align-items:flex-start;
         padding: 12px 0;
@@ -1294,7 +1346,6 @@ function StyleSheet() {
       ._switch._on ._switchKnob{ left: 23px; }
       ._switch:disabled{ opacity: 0.6; cursor:not-allowed; }
 
-      /* Toast */
       ._toast{
         position: fixed;
         right: 24px;
@@ -1332,7 +1383,6 @@ function StyleSheet() {
       ._modalClose{ color: rgba(17,24,39,0.70); }
       ._modalClose:hover{ background: rgba(17,24,39,0.06); }
 
-      /* Modal */
       ._modalBackdrop{
         position: fixed; inset:0; z-index: 9000;
         background: rgba(17,24,39,0.45);
@@ -1372,7 +1422,6 @@ function StyleSheet() {
         background:#fafafa;
       }
 
-      /* Skeleton */
       ._skCard{
         border-radius: 16px;
         border: 1px solid rgba(226,232,240,0.95);

@@ -1,5 +1,5 @@
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 import "./Chat.css";
 
@@ -17,6 +17,8 @@ const AI_CONVO_ID = "ai";
 const AI_CONTACT = { id: "ai", username: "KIRO AI" };
 
 export default function Chat() {
+  const navigate = useNavigate();
+
   const [user, setUser] = useState(null);
 
   const [conversations, setConversations] = useState([]);
@@ -31,6 +33,10 @@ export default function Chat() {
   // sidebar search
   const [sidebarQuery, setSidebarQuery] = useState("");
 
+  // header message search (🔍 beside gear)
+  const [isMsgSearchOpen, setIsMsgSearchOpen] = useState(false);
+  const [msgQuery, setMsgQuery] = useState("");
+
   // modal: add contact / new chat
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userSearch, setUserSearch] = useState("");
@@ -38,6 +44,11 @@ export default function Chat() {
   const [loadingUsers, setLoadingUsers] = useState(false);
 
   const messagesRef = useRef(null);
+
+  // ✅ always go back to organisation page (NOT history back)
+  const goBackToOrganisation = () => {
+    navigate("/organisation"); // change if your org route differs
+  };
 
   // -------------------------
   // Helpers
@@ -160,7 +171,6 @@ export default function Chat() {
       ...new Set(rows.map((c) => (c.user_a === u.id ? c.user_b : c.user_a))),
     ];
 
-    // if no conversations
     if (otherIds.length === 0) {
       setConversations([]);
       setActiveConversationId(null);
@@ -178,11 +188,11 @@ export default function Chat() {
 
     const profileMap = new Map((profs || []).map((p) => [p.id, p]));
 
-    // Fetch last message preview per conversation
     const formatted = [];
     for (const c of rows) {
       const otherId = c.user_a === u.id ? c.user_b : c.user_a;
-      const other = profileMap.get(otherId) || { id: otherId, username: "Unknown" };
+      const other =
+        profileMap.get(otherId) || { id: otherId, username: "Unknown" };
 
       const { data: lastMsg } = await supabase
         .from("chat")
@@ -204,7 +214,6 @@ export default function Chat() {
 
     setConversations(formatted);
 
-    // Select first conversation if none selected
     if (!activeConversationId && formatted.length) {
       setActiveConversationId(formatted[0].id);
       setActiveOtherUser(formatted[0].otherUser);
@@ -237,8 +246,14 @@ export default function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
+  // close/clear header message search when switching chats
+  useEffect(() => {
+    setMsgQuery("");
+    setIsMsgSearchOpen(false);
+  }, [activeConversationId]);
+
   // -------------------------
-  // Realtime subscription: new messages in active conversation
+  // Realtime subscription
   // -------------------------
   useEffect(() => {
     if (!user || !activeConversationId) return;
@@ -257,10 +272,8 @@ export default function Chat() {
         async (payload) => {
           const m = payload.new;
 
-          // only if I'm sender or recipient
           if (m.sender_id !== user.id && m.recipient_id !== user.id) return;
 
-          // if I am the recipient, mark delivered immediately
           if (m.recipient_id === user.id && !m.delivered_at) {
             await supabase
               .from("chat")
@@ -268,7 +281,6 @@ export default function Chat() {
               .eq("id", m.id);
           }
 
-          // add message (dedupe)
           setMessages((prev) => {
             if (prev.some((x) => x.id === m.id)) return prev;
             return [
@@ -284,7 +296,6 @@ export default function Chat() {
             ];
           });
 
-          // update sidebar preview + bump sorting
           setConversations((prev) => {
             const nowIso = m.created_at;
             const next = prev.map((c) =>
@@ -304,7 +315,7 @@ export default function Chat() {
           setTimeout(() => scrollToBottom(true), 30);
         }
       )
-      .subscribe((status) => console.log("realtime status:", status));
+      .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
@@ -312,7 +323,7 @@ export default function Chat() {
   }, [user, activeConversationId]);
 
   // -------------------------
-  // Load messages for active conversation
+  // Load messages
   // -------------------------
   useEffect(() => {
     if (!user || !activeConversationId) return;
@@ -350,20 +361,18 @@ export default function Chat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, activeConversationId]);
 
-
-  
   // -------------------------
-  // Send message (normal DB chat)
+  // Send message (DB)
   // -------------------------
   const sendMessage = async () => {
     const trimmed = text.trim();
-    if (!trimmed || !user || !activeConversationId || !activeOtherUser?.id) return;
+    if (!trimmed || !user || !activeConversationId || !activeOtherUser?.id)
+      return;
     if (activeConversationId === AI_CONVO_ID) return;
 
     const tempId = `temp-${Date.now()}`;
     const nowIso = new Date().toISOString();
 
-    // optimistic bubble
     setMessages((prev) => [
       ...prev,
       {
@@ -377,7 +386,6 @@ export default function Chat() {
       },
     ]);
 
-    // sidebar preview
     setConversations((prev) =>
       prev.map((c) =>
         c.id === activeConversationId
@@ -389,7 +397,6 @@ export default function Chat() {
     setText("");
     setTimeout(() => scrollToBottom(true), 0);
 
-    // write to DB
     const { data, error } = await supabase
       .from("chat")
       .insert([
@@ -410,7 +417,6 @@ export default function Chat() {
       return;
     }
 
-    // replace temp bubble with real row
     setMessages((prev) =>
       prev.map((m) =>
         m.id === tempId
@@ -433,7 +439,7 @@ export default function Chat() {
   };
 
   // -------------------------
-  // Send message (AI chat via backend)
+  // Send message (AI)
   // -------------------------
   const sendAIMessage = async () => {
     const trimmed = text.trim();
@@ -451,11 +457,10 @@ export default function Chat() {
 
     try {
       const res = await fetch("http://localhost:5000/api/ai/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ sessionId: user.id, message: trimmed }),
-    });
-
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId: user.id, message: trimmed }),
+      });
 
       const data = await res.json();
 
@@ -470,7 +475,7 @@ export default function Chat() {
       ]);
 
       setTimeout(() => scrollToBottom(true), 30);
-    } catch (e) {
+    } catch {
       setMessages((prev) => [
         ...prev,
         {
@@ -515,7 +520,7 @@ export default function Chat() {
   };
 
   // -------------------------
-  // Create/Open conversation (NEW CONTACT FLOW)
+  // Create/Open conversation
   // -------------------------
   const createOrOpenConversation = async (otherProfile) => {
     if (!user || !otherProfile?.id) return;
@@ -595,12 +600,20 @@ export default function Chat() {
     ? getUserGradient(activeOtherUser.id || headerName)
     : "linear-gradient(135deg,#aaa,#777)";
 
-  // group messages by day label
+  // ✅ filter messages by header search query
+  const displayedMessages = useMemo(() => {
+    const q = msgQuery.trim().toLowerCase();
+    if (!q) return messages;
+    return messages.filter((m) =>
+      String(m.text || "").toLowerCase().includes(q)
+    );
+  }, [messages, msgQuery]);
+
   const groupedMessages = useMemo(() => {
     const groups = [];
     let currentLabel = null;
 
-    for (const m of messages) {
+    for (const m of displayedMessages) {
       const label = formatDayLabel(m.created_at);
       if (label !== currentLabel) {
         currentLabel = label;
@@ -609,7 +622,7 @@ export default function Chat() {
       groups.push({ type: "msg", ...m });
     }
     return groups;
-  }, [messages]);
+  }, [displayedMessages]);
 
   if (!user) {
     return (
@@ -631,11 +644,23 @@ export default function Chat() {
         <aside className="chat-sidebar">
           <div className="sidebar-top">
             <div className="sidebar-title-row">
-              <div className="sidebar-title">Chats</div>
+              <div className="sidebar-title-left">
+                <button
+                  className="icon-btn sidebar-back-btn no-jump"
+                  title="Back to Organisation"
+                  onClick={goBackToOrganisation}
+                  type="button"
+                >
+                  ←
+                </button>
+                <div className="sidebar-title">Chats</div>
+              </div>
+
               <button
                 className="icon-btn"
                 title="Add contact / new chat"
                 onClick={() => setIsModalOpen(true)}
+                type="button"
               >
                 +
               </button>
@@ -644,13 +669,12 @@ export default function Chat() {
             <div className="sidebar-search">
               <span className="sidebar-search-icon">🔍</span>
               <input
-              id="chat-search"
-              name="chatSearch"
-              value={sidebarQuery}
-              onChange={(e) => setSidebarQuery(e.target.value)}
-              placeholder="Search chats..."
-            />
-
+                id="chat-search"
+                name="chatSearch"
+                value={sidebarQuery}
+                onChange={(e) => setSidebarQuery(e.target.value)}
+                placeholder="Search chats..."
+              />
             </div>
           </div>
 
@@ -658,19 +682,22 @@ export default function Chat() {
             {filteredConversations.map((c) => {
               const name = c.otherUser?.username || "Unknown";
               const initials = getInitials(name);
-              const gradient = c.id === AI_CONVO_ID
-                ? "linear-gradient(135deg, #6c5ce7, #a29bfe)"
-                : getUserGradient(c.otherUser?.id || name);
+              const gradient =
+                c.id === AI_CONVO_ID
+                  ? "linear-gradient(135deg, #6c5ce7, #a29bfe)"
+                  : getUserGradient(c.otherUser?.id || name);
 
               return (
                 <button
                   key={c.id}
-                  className={`chat-tile ${c.id === activeConversationId ? "active" : ""}`}
+                  className={`chat-tile ${
+                    c.id === activeConversationId ? "active" : ""
+                  }`}
                   onClick={() => {
                     if (c.id === AI_CONVO_ID) {
                       setActiveConversationId(AI_CONVO_ID);
                       setActiveOtherUser(AI_CONTACT);
-                      setMessages([]); // reset AI thread (optional)
+                      setMessages([]);
                       return;
                     }
                     setActiveConversationId(c.id);
@@ -720,10 +747,44 @@ export default function Chat() {
             </div>
 
             <div className="header-actions">
-              <button className="icon-btn" title="Search">
+              {/* 🔍 message filter */}
+              {isMsgSearchOpen && (
+                <div className="header-msg-search">
+                  <input
+                    value={msgQuery}
+                    onChange={(e) => setMsgQuery(e.target.value)}
+                    placeholder="Search messages..."
+                    disabled={!activeConversationId}
+                  />
+
+                  <button
+                    className="msg-clear"
+                    title="Clear"
+                    onClick={() => setMsgQuery("")}
+                    disabled={!msgQuery}
+                    type="button"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+
+              <button
+                className="icon-btn no-jump"
+                title="Search messages"
+                onClick={() => {
+                  setIsMsgSearchOpen((v) => {
+                    const next = !v;
+                    if (!next) setMsgQuery("");
+                    return next;
+                  });
+                }}
+                type="button"
+              >
                 🔍
               </button>
-              <button className="icon-btn" title="Settings">
+
+              <button className="icon-btn no-jump" title="Settings" type="button">
                 ⚙️
               </button>
             </div>
@@ -737,6 +798,12 @@ export default function Chat() {
                   Pick a chat from the left or click + to add a contact.
                 </div>
               </div>
+            ) : msgQuery.trim() &&
+              groupedMessages.filter((x) => x.type === "msg").length === 0 ? (
+              <div className="empty-chat">
+                <div className="empty-chat-title">No matches</div>
+                <div className="empty-chat-sub">Try a different keyword.</div>
+              </div>
             ) : (
               groupedMessages.map((item, idx) => {
                 if (item.type === "divider") {
@@ -748,7 +815,10 @@ export default function Chat() {
                 }
 
                 return (
-                  <div key={item.id} className={`msg-row ${item.sent ? "sent" : "recv"}`}>
+                  <div
+                    key={item.id}
+                    className={`msg-row ${item.sent ? "sent" : "recv"}`}
+                  >
                     <div className="msg-bubble">
                       <div className="msg-text">{item.text}</div>
                       <div className="msg-meta">
@@ -756,7 +826,11 @@ export default function Chat() {
                         {item.sent ? (
                           <span
                             className={`msg-ticks ${
-                              item.read_at ? "read" : item.delivered_at ? "delivered" : "sent"
+                              item.read_at
+                                ? "read"
+                                : item.delivered_at
+                                ? "delivered"
+                                : "sent"
                             }`}
                           >
                             {item.delivered_at ? "✓✓" : "✓"}
@@ -771,7 +845,7 @@ export default function Chat() {
           </section>
 
           <footer className="chat-input">
-            <button className="icon-btn" title="Add">
+            <button className="icon-btn" title="Add" type="button">
               ＋
             </button>
 
@@ -792,7 +866,7 @@ export default function Chat() {
               }}
             />
 
-            <button className="icon-btn" title="Mic">
+            <button className="icon-btn" title="Mic" type="button">
               🎤
             </button>
 
@@ -800,6 +874,7 @@ export default function Chat() {
               className="send-btn"
               onClick={() => (isAIChat ? sendAIMessage() : sendMessage())}
               disabled={!text.trim() || !activeConversationId}
+              type="button"
             >
               ➤
             </button>
@@ -817,6 +892,7 @@ export default function Chat() {
                 className="icon-btn"
                 onClick={() => setIsModalOpen(false)}
                 title="Close"
+                type="button"
               >
                 ✕
               </button>
@@ -824,17 +900,16 @@ export default function Chat() {
 
             <div className="modal-search">
               <input
-              id="add-contact-search"
-              name="addContactSearch"
-              value={userSearch}
-              onChange={(e) => {
-                const v = e.target.value;
-                setUserSearch(v);
-                searchUsers(v);
-              }}
-              placeholder="Search by username..."
-            />
-
+                id="add-contact-search"
+                name="addContactSearch"
+                value={userSearch}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setUserSearch(v);
+                  searchUsers(v);
+                }}
+                placeholder="Search by username..."
+              />
             </div>
 
             <div className="modal-body">
@@ -853,6 +928,7 @@ export default function Chat() {
                     key={p.id}
                     className="contact-row"
                     onClick={() => createOrOpenConversation(p)}
+                    type="button"
                   >
                     <div className="contact-avatar" style={{ background: gradient }}>
                       {initials}
@@ -865,7 +941,11 @@ export default function Chat() {
             </div>
 
             <div className="modal-footer">
-              <button className="modal-secondary" onClick={() => setIsModalOpen(false)}>
+              <button
+                className="modal-secondary"
+                onClick={() => setIsModalOpen(false)}
+                type="button"
+              >
                 Cancel
               </button>
             </div>

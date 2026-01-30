@@ -36,3 +36,219 @@
     transform: rotate(360deg);
   }
 }
+/* =========================
+   HEADER MESSAGE SEARCH (CLEAN)
+========================= */
+
+/* keep header aligned */
+.chat-header{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* actions row */
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+/* nice pill search */
+.header-msg-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+
+  height: 40px;
+  padding: 0 10px;
+
+  border-radius: 999px;
+  border: 1.5px solid rgba(108,92,231,0.26);
+  background: rgba(108,92,231,0.06);
+}
+
+/* input inside pill */
+.header-msg-search input{
+  width: 220px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* clear button inside pill (small, no jump) */
+.header-msg-search .msg-clear{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(108,92,231,0.20);
+  background: rgba(108,92,231,0.08);
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.header-msg-search .msg-clear:hover{
+  background: rgba(108,92,231,0.12);
+}
+
+/* Mobile */
+@media (max-width: 860px){
+  .header-msg-search input{ width: 160px; }
+}
+
+/* =========================
+   STOP THE HOVER "JUMP" FOR IMPORTANT BUTTONS
+========================= */
+
+/* your global icon-btn hover moves elements up */
+.icon-btn:hover{
+  background: rgba(108,92,231,0.12);
+  transform: translateY(-1px);
+}
+
+/* BUT: keep header icons + back button fixed (no jump) */
+.chat-header .icon-btn:hover,
+.back-btn:hover{
+  transform: none !important;
+}
+
+/* =========================
+   BACK BUTTON: SINGLE SOURCE OF TRUTH (remove conflicts)
+========================= */
+
+/* remove all previous pinned/side overrides; this is the only one you keep */
+.back-btn{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+
+  border: 1.5px solid rgba(108,92,231,0.24);
+  background: rgba(108,92,231,0.08);
+
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+
+  padding: 0;         /* prevents layout change */
+  margin: 0;
+}
+
+.back-btn:active{
+  transform: none !important;
+}
+/* =========================
+   HEADER MESSAGE SEARCH (CLEAN)
+========================= */
+
+/* keep header aligned */
+.chat-header{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* actions row */
+.header-actions{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+/* nice pill search */
+.header-msg-search{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+
+  height: 40px;
+  padding: 0 10px;
+
+  border-radius: 999px;
+  border: 1.5px solid rgba(108,92,231,0.26);
+  background: rgba(108,92,231,0.06);
+}
+
+/* input inside pill */
+.header-msg-search input{
+  width: 220px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* clear button inside pill (small, no jump) */
+.header-msg-search .msg-clear{
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+
+  border: 1px solid rgba(108,92,231,0.20);
+  background: rgba(108,92,231,0.08);
+  cursor: pointer;
+
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.header-msg-search .msg-clear:hover{
+  background: rgba(108,92,231,0.12);
+}
+
+/* Mobile */
+@media (max-width: 860px){
+  .header-msg-search input{ width: 160px; }
+}
+
+/* =========================
+   STOP THE HOVER "JUMP" FOR IMPORTANT BUTTONS
+========================= */
+
+/* your global icon-btn hover moves elements up */
+.icon-btn:hover{
+  background: rgba(108,92,231,0.12);
+  transform: translateY(-1px);
+}
+
+/* BUT: keep header icons + back button fixed (no jump) */
+.chat-header .icon-btn:hover,
+.back-btn:hover{
+  transform: none !important;
+}
+
+/* =========================
+   BACK BUTTON: SINGLE SOURCE OF TRUTH (remove conflicts)
+========================= */
+
+/* remove all previous pinned/side overrides; this is the only one you keep */
+.back-btn{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+
+  border: 1.5px solid rgba(108,92,231,0.24);
+  background: rgba(108,92,231,0.08);
+
+  display: grid;
+  place-items: center;
+  font-weight: 900;
+
+  padding: 0;         /* prevents layout change */
+  margin: 0;
+}
+
+.back-btn:active{
+  transform: none !important;
+}
