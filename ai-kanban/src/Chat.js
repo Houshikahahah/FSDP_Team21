@@ -469,15 +469,18 @@ const sendAIMessage = async () => {
 
     const data = await res.json().catch(() => ({}));
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: `ai-${Date.now()}`,
-        text: res.ok ? data.reply : `AI error: ${data?.error || res.status}`,
-        sent: false,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+setMessages((prev) => [
+  ...prev,
+  {
+    id: `ai-${Date.now()}`,
+    text: res.ok
+      ? data.reply
+      : `AI error (${res.status}): ${data?.details || data?.error || "unknown"}`,
+    sent: false,
+    created_at: new Date().toISOString(),
+  },
+]);
+
 
     setTimeout(() => scrollToBottom(true), 30);
   } catch (err) {
