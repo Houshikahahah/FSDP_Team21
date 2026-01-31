@@ -1,7 +1,5 @@
-
 // aiChat.js (CommonJS)
-require("./aiAgent.js")
-
+const { runAIAgent } = require("./aiAgent.js"); // ✅ import the function
 
 // In-memory session store
 const sessions = new Map();
@@ -31,7 +29,6 @@ async function handleAIChat(req, res) {
       { role: "model", parts: [{ text: reply }] }
     );
 
-    // keep memory bounded
     if (history.length > 30) history.splice(1, 10);
 
     sessions.set(key, history);
@@ -39,7 +36,12 @@ async function handleAIChat(req, res) {
     return res.json({ reply });
   } catch (err) {
     console.error("AI failed:", err);
-    return res.status(500).json({ error: "AI failed" });
+
+    // ✅ send details back so your frontend shows the REAL reason
+    return res.status(500).json({
+      error: "AI failed",
+      details: err?.message || "unknown error",
+    });
   }
 }
 
