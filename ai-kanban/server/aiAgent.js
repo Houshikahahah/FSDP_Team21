@@ -1,3 +1,4 @@
+const { runAIAgent } = require("./aiAgent.js");
 
 // src/aiAgent.js (CommonJS)
 // Hugging Face Inference Providers via OpenAI-compatible router
